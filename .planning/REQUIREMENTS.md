@@ -66,24 +66,24 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONSUMER-01 | TBD | Pending |
-| CONSUMER-02 | TBD | Pending |
-| VALID-01 | TBD | Pending |
-| VALID-02 | TBD | Pending |
-| VALID-03 | TBD | Pending |
-| RATELIMIT-01 | TBD | Pending |
-| SM-01 | TBD | Pending |
-| SM-02 | TBD | Pending |
-| SM-03 | TBD | Pending |
-| SM-04 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
+| CONSUMER-01 | Phase 2 | Pending |
+| CONSUMER-02 | Phase 2 | Pending |
+| VALID-01 | Phase 2 | Pending |
+| VALID-02 | Phase 2 | Pending |
+| VALID-03 | Phase 2 | Pending |
+| QUAL-02 | Phase 2 | Pending |
+| SM-01 | Phase 3 | Pending |
+| SM-02 | Phase 3 | Pending |
+| SM-03 | Phase 3 | Pending |
+| SM-04 | Phase 3 | Pending |
+| RATELIMIT-01 | Phase 3 | Pending |
+| QUAL-01 | Phase 3 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 12 total
-- Mapped to phases: TBD (roadmapper fills this)
-- Unmapped: 12 ⚠️ (pre-roadmap)
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after v1.1 milestone start*
+*Last updated: 2026-03-22 — traceability filled after v1.1 roadmap creation*
