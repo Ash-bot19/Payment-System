@@ -124,7 +124,11 @@ M1: Foundation + Ingestion — DONE 2026-03-22
   ✅ FastAPI webhook service with lifespan, Prometheus instrumentation
   ✅ POST /webhook: Stripe HMAC verification, Redis idempotency (Lua SET NX EX 86400), Kafka publish
   ✅ 5 unit tests passing (.venv, pytest-asyncio)
-M2: Validation Layer + State Machine — TODO
+M2: Validation Layer + State Machine — IN PROGRESS (GSD v1.1 initialized 2026-03-22)
+  ⏳ GSD milestone v1.1 initialized — REQUIREMENTS.md + ROADMAP.md committed
+  ⏳ Phase 2: Kafka Consumer + Validation + DLQ — ready to plan
+  ⏳ Phase 3: State Machine + Rate Limiting + Downstream Publish — ready to plan
+  📋 Resume: /gsd:resume-work → /gsd:plan-phase 2
 M3: Spark Feature Engineering — TODO
 M4: ML Risk Scoring Service — TODO
 M5: Financial Ledger — TODO
