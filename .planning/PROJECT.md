@@ -72,5 +72,33 @@ M1 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
 | FastAPI lifespan over `@app.on_event` | `on_event` deprecated in FastAPI 0.115+ | ✓ Good |
 | Pydantic v2 model contracts in `models/` | No inline schemas in routes; v2 `model_validator` not `validator` | ✓ Good |
 
+## Current Milestone: v1.1 Validation + State Machine
+
+**Goal:** Build the validation layer that consumes raw webhook events, enforces schema and business rules, rate-limits by merchant, drives the payment state machine into PostgreSQL, and publishes clean events downstream.
+
+**Target features:**
+- Kafka consumer (`validation-service`) consuming `payment.webhook.received`
+- Schema + business-rule validation with DLQ on failure
+- Redis rate limiting (100 req/min per merchant)
+- Payment state machine persisted in PostgreSQL `payment_state_log` (append-only)
+- Publish validated events to `payment.transaction.validated`
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-22 after v1.0 milestone*
+*Last updated: 2026-03-22 after v1.1 milestone started*

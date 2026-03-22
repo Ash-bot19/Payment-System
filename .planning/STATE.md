@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-22 after v1.0 milestone)
 
 ## Current Position
 
-Phase: 1 of 10 complete — ready to start Phase 2
-Plan: Phase 2 not yet planned
-Status: Ready to plan Phase 2
-Last activity: 2026-03-22 — v1.0 milestone shipped (scaffold, Docker Compose, webhook receiver, Redis idempotency, Kafka, 5 tests)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.1
+Last activity: 2026-03-22 — Milestone v1.1 started (Validation + State Machine)
 
 Progress: [█░░░░░░░░░] 10%
 
