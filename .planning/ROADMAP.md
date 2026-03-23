@@ -47,10 +47,11 @@ Plans:
   3. Events with unsupported event types or amount <= 0 are rejected by business-rule validation
   4. Every rejected event appears on `payment.dlq` with all six required DLQ fields: original_topic, original_offset, failure_reason (SCHEMA_INVALID), retry_count, first_failure_ts, payload verbatim
   5. Unit tests covering at least three business-rule cases (valid, schema failure, business-rule failure) pass in CI
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Validation models, schema/business-rule logic, DLQ producer, unit tests
+- [ ] 02-02-PLAN.md — Kafka validation consumer, Docker container, docker-compose service
 
 #### Phase 3: State Machine + Rate Limiting + Downstream Publish
 
@@ -142,7 +143,7 @@ Plans:
   3. Events with unsupported event types or amount <= 0 are rejected by business-rule validation
   4. Every rejected event appears on `payment.dlq` with all six required DLQ fields: original_topic, original_offset, failure_reason (SCHEMA_INVALID), retry_count, first_failure_ts, payload verbatim
   5. Unit tests covering at least three business-rule cases (valid, schema failure, business-rule failure) pass in CI
-**Plans**: TBD
+**Plans**: 2 plans
 
 ### Phase 3: State Machine + Rate Limiting + Downstream Publish
 
@@ -163,7 +164,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Foundation + Ingestion | v1.0 | 1/1 | Complete | 2026-03-22 |
-| 2. Kafka Consumer + Validation + DLQ | v1.1 | 0/TBD | Not started | - |
+| 2. Kafka Consumer + Validation + DLQ | v1.1 | 0/2 | Planning complete | - |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 0/TBD | Not started | - |
 | 4. Spark Feature Engineering | v1.2 | 0/TBD | Not started | - |
 | 5. ML Risk Scoring Service | v1.2 | 0/TBD | Not started | - |
