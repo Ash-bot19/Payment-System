@@ -50,7 +50,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Validation models, schema/business-rule logic, DLQ producer, unit tests
+- [x] 02-01-PLAN.md — Validation models, schema/business-rule logic, DLQ producer, unit tests
 - [ ] 02-02-PLAN.md — Kafka validation consumer, Docker container, docker-compose service
 
 #### Phase 3: State Machine + Rate Limiting + Downstream Publish
@@ -164,7 +164,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Foundation + Ingestion | v1.0 | 1/1 | Complete | 2026-03-22 |
-| 2. Kafka Consumer + Validation + DLQ | v1.1 | 0/2 | Planning complete | - |
+| 2. Kafka Consumer + Validation + DLQ | v1.1 | 1/2 | In Progress|  |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 0/TBD | Not started | - |
 | 4. Spark Feature Engineering | v1.2 | 0/TBD | Not started | - |
 | 5. ML Risk Scoring Service | v1.2 | 0/TBD | Not started | - |

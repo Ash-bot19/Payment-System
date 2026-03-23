@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v1.1
+milestone_name: Validation + State Machine
+status: unknown
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-23T12:44:32.832Z"
+progress:
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +19,17 @@
 See: .planning/PROJECT.md (updated 2026-03-22 after v1.1 milestone started)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** v1.1 — Phase 2: Kafka Consumer + Validation + DLQ (ready to plan)
+**Current focus:** Phase 02 — Kafka Consumer + Validation + DLQ
 
 ## Current Position
 
-Phase: 2 — Kafka Consumer + Validation + DLQ
-Plan: — (not yet planned)
-Status: Ready for /gsd:plan-phase 2
-Last activity: 2026-03-22 — v1.1 roadmap created (Phases 2-3 defined)
-
-Progress: [██░░░░░░░░] 18%
+Phase: 02 (Kafka Consumer + Validation + DLQ) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 1
 - Sessions: 1
 
@@ -27,6 +38,7 @@ Progress: [██░░░░░░░░] 18%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation + Ingestion | 1 | 1 session | - |
+| Phase 02-kafka-consumer-validation-dlq P01 | pre-committed | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -35,12 +47,16 @@ Progress: [██░░░░░░░░] 18%
 See PROJECT.md Key Decisions table for full log.
 
 Decisions affecting Phase 2 and Phase 3:
+
 - **Kafka consumer group LOCKED** — must be `validation-service`; manual offset commit only (no auto-commit)
 - **DLQ contract LOCKED** — failures must include: original_topic, original_offset, failure_reason (SCHEMA_INVALID | IDEMPOTENCY_COLLISION | ML_TIMEOUT | LEDGER_WRITE_FAIL | UNKNOWN), retry_count, first_failure_ts, payload verbatim
 - **Redis rate limiting LOCKED** — key format `rate_limit:{merchant_id}:{minute_bucket}`, INCR → 429 if > 100/min
 - **State machine LOCKED** — transitions: INITIATED → VALIDATED (valid), INITIATED → FAILED (invalid/rate-limited); table `payment_state_log` is append-only, no UPDATE/DELETE
 - **Pydantic v2** — use `model_validator`, not `validator`; all schemas in `models/`
 - **PostgreSQL Alembic** — always run migrations in a transaction
+- [Phase 02]: validate_event raises ValidationError (not returns optional) — unambiguous failure path for DLQ routing
+- [Phase 02]: Amount positivity enforced for payment_intent.succeeded only (D-12); canceled/failed events may have amount=0
+- [Phase 02]: DLQProducer crash-on-exhaustion (re-raise KafkaException) preferred over silent drop — Docker restart replays message per D-17
 
 ### Pending Todos
 
@@ -55,6 +71,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Phase 2 context gathered (CONTEXT.md written); ready to plan Phase 2
+Last session: 2026-03-23T12:44:32.828Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

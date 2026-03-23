@@ -12,9 +12,9 @@
 
 ### Validation
 
-- [ ] **VALID-01**: Service validates event schema (required fields present, correct types) — malformed events rejected
-- [ ] **VALID-02**: Service validates business rules (supported event types, amount > 0 for payment events)
-- [ ] **VALID-03**: Failed validation publishes to `payment.dlq` with full DLQ contract (failure_reason: SCHEMA_INVALID, original_topic, original_offset, retry_count, first_failure_ts, payload verbatim)
+- [x] **VALID-01**: Service validates event schema (required fields present, correct types) — malformed events rejected
+- [x] **VALID-02**: Service validates business rules (supported event types, amount > 0 for payment events)
+- [x] **VALID-03**: Failed validation publishes to `payment.dlq` with full DLQ contract (failure_reason: SCHEMA_INVALID, original_topic, original_offset, retry_count, first_failure_ts, payload verbatim)
 
 ### Rate Limiting
 
@@ -30,7 +30,7 @@
 ### Quality
 
 - [ ] **QUAL-01**: Integration tests covering happy path, schema failure → DLQ, rate limit, and state transitions
-- [ ] **QUAL-02**: Unit tests for business rule validation logic
+- [x] **QUAL-02**: Unit tests for business rule validation logic
 
 ## Future Requirements (Deferred)
 
@@ -68,10 +68,10 @@
 |-------------|-------|--------|
 | CONSUMER-01 | Phase 2 | Pending |
 | CONSUMER-02 | Phase 2 | Pending |
-| VALID-01 | Phase 2 | Pending |
-| VALID-02 | Phase 2 | Pending |
-| VALID-03 | Phase 2 | Pending |
-| QUAL-02 | Phase 2 | Pending |
+| VALID-01 | Phase 2 | Complete |
+| VALID-02 | Phase 2 | Complete |
+| VALID-03 | Phase 2 | Complete |
+| QUAL-02 | Phase 2 | Complete |
 | SM-01 | Phase 3 | Pending |
 | SM-02 | Phase 3 | Pending |
 | SM-03 | Phase 3 | Pending |
