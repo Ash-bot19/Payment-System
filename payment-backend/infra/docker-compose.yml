@@ -143,6 +143,29 @@ services:
       timeout: 5s
       retries: 5
 
+  # ─── Validation consumer (reads payment.webhook.received, validates, DLQ) ───
+  validation-consumer:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.validation
+    container_name: validation-consumer
+    ports:
+      - "8002:8002"
+    env_file:
+      - ../.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
 volumes:
   redis_data:
   postgres_data:
