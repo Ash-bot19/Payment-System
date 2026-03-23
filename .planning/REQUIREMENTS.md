@@ -7,8 +7,8 @@
 
 ### Consumer
 
-- [ ] **CONSUMER-01**: Validation service consumes from `payment.webhook.received` with manual offset commit only (never auto-commit)
-- [ ] **CONSUMER-02**: Consumer group ID is `validation-service`
+- [x] **CONSUMER-01**: Validation service consumes from `payment.webhook.received` with manual offset commit only (never auto-commit)
+- [x] **CONSUMER-02**: Consumer group ID is `validation-service`
 
 ### Validation
 
@@ -66,8 +66,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONSUMER-01 | Phase 2 | Pending |
-| CONSUMER-02 | Phase 2 | Pending |
+| CONSUMER-01 | Phase 2 | Complete |
+| CONSUMER-02 | Phase 2 | Complete |
 | VALID-01 | Phase 2 | Complete |
 | VALID-02 | Phase 2 | Complete |
 | VALID-03 | Phase 2 | Complete |

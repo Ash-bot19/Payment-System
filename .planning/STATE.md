@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Validation + State Machine
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-23T12:44:32.832Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-23T12:53:32.081Z"
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -39,6 +39,7 @@ Plan: 2 of 2
 |-------|-------|-------|----------|
 | 1. Foundation + Ingestion | 1 | 1 session | - |
 | Phase 02-kafka-consumer-validation-dlq P01 | pre-committed | 3 tasks | 4 files |
+| Phase 02-kafka-consumer-validation-dlq P02 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 02]: validate_event raises ValidationError (not returns optional) — unambiguous failure path for DLQ routing
 - [Phase 02]: Amount positivity enforced for payment_intent.succeeded only (D-12); canceled/failed events may have amount=0
 - [Phase 02]: DLQProducer crash-on-exhaustion (re-raise KafkaException) preferred over silent drop — Docker restart replays message per D-17
+- [Phase 02-kafka-consumer-validation-dlq]: Threaded http.server for /health endpoint — zero-dependency health check, avoids uvicorn for pure consumer service
+- [Phase 02-kafka-consumer-validation-dlq]: DLQ publish before offset commit — silent drops impossible; DLQ failure triggers crash-and-restart via Docker
 
 ### Pending Todos
 
@@ -71,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:44:32.828Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-23T12:53:32.078Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
