@@ -46,7 +46,7 @@ def make_raw_event(**overrides: Any) -> dict[str, Any]:
 def test_valid_succeeded_event_returns_validated_payment_event() -> None:
     """Valid payment_intent.succeeded event returns ValidatedPaymentEvent."""
     raw = make_raw_event()
-    result = validate_event(raw)
+    result = validate_event(raw, merchant_id="test_merchant")
 
     assert isinstance(result, ValidatedPaymentEvent)
     assert result.event_id == "evt_test_123"
@@ -54,6 +54,7 @@ def test_valid_succeeded_event_returns_validated_payment_event() -> None:
     assert result.amount_cents == 1000
     assert result.currency == "usd"
     assert result.stripe_customer_id == "cus_test_456"
+    assert result.merchant_id == "test_merchant"
 
 
 def test_valid_canceled_event_with_amount_zero_passes() -> None:
@@ -70,7 +71,7 @@ def test_valid_canceled_event_with_amount_zero_passes() -> None:
             }
         },
     )
-    result = validate_event(raw)
+    result = validate_event(raw, merchant_id="test_merchant")
 
     assert isinstance(result, ValidatedPaymentEvent)
     assert result.event_type == "payment_intent.canceled"
@@ -90,7 +91,7 @@ def test_valid_payment_failed_event_passes() -> None:
             }
         },
     )
-    result = validate_event(raw)
+    result = validate_event(raw, merchant_id="test_merchant")
 
     assert isinstance(result, ValidatedPaymentEvent)
     assert result.event_type == "payment_intent.payment_failed"
@@ -107,7 +108,7 @@ def test_missing_stripe_event_id_raises_schema_invalid() -> None:
     del raw["stripe_event_id"]
 
     with pytest.raises(ValidationError) as exc_info:
-        validate_event(raw)
+        validate_event(raw, merchant_id="test_merchant")
 
     assert exc_info.value.reason == "SCHEMA_INVALID"
 
@@ -117,7 +118,7 @@ def test_unsupported_event_type_raises_schema_invalid() -> None:
     raw = make_raw_event(event_type="charge.succeeded")
 
     with pytest.raises(ValidationError) as exc_info:
-        validate_event(raw)
+        validate_event(raw, merchant_id="test_merchant")
 
     assert exc_info.value.reason == "SCHEMA_INVALID"
 
@@ -137,7 +138,7 @@ def test_missing_amount_field_raises_schema_invalid() -> None:
     )
 
     with pytest.raises(ValidationError) as exc_info:
-        validate_event(raw)
+        validate_event(raw, merchant_id="test_merchant")
 
     assert exc_info.value.reason == "SCHEMA_INVALID"
 
@@ -162,7 +163,7 @@ def test_succeeded_with_amount_zero_raises_schema_invalid() -> None:
     )
 
     with pytest.raises(ValidationError) as exc_info:
-        validate_event(raw)
+        validate_event(raw, merchant_id="test_merchant")
 
     assert exc_info.value.reason == "SCHEMA_INVALID"
 
@@ -182,7 +183,7 @@ def test_succeeded_with_negative_amount_raises_schema_invalid() -> None:
     )
 
     with pytest.raises(ValidationError) as exc_info:
-        validate_event(raw)
+        validate_event(raw, merchant_id="test_merchant")
 
     assert exc_info.value.reason == "SCHEMA_INVALID"
 

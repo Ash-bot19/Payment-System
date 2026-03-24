@@ -39,7 +39,7 @@ class ValidationError(Exception):
         self.detail = detail
 
 
-def validate_event(raw_message: dict[str, Any]) -> ValidatedPaymentEvent:
+def validate_event(raw_message: dict[str, Any], merchant_id: str = "unknown_merchant") -> ValidatedPaymentEvent:
     """Validate a raw Kafka message from payment.webhook.received.
 
     Steps:
@@ -129,5 +129,6 @@ def validate_event(raw_message: dict[str, Any]) -> ValidatedPaymentEvent:
         amount_cents=amount,
         currency=currency,
         stripe_customer_id=stripe_customer_id,
+        merchant_id=merchant_id,
         received_at=message.received_at,
     )

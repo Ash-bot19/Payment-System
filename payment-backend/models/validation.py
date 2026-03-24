@@ -18,6 +18,7 @@ class ValidatedPaymentEvent(BaseModel):
     amount_cents: int       # from payload.data.object.amount
     currency: str           # from payload.data.object.currency
     stripe_customer_id: str # from payload.data.object.customer or ""
+    merchant_id: str        # from payload.data.object.metadata.merchant_id or default
     received_at: datetime
 
 
