@@ -19,11 +19,15 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 - ✓ Prometheus metrics instrumentation on all HTTP routes from day one — v1.0
 - ✓ Structured logging via structlog bound to event context — v1.0
 - ✓ 5 unit tests covering happy path, duplicate, and invalid-signature cases — v1.0
+- ✓ Schema + business-rule validation layer consuming payment.webhook.received — v1.1
+- ✓ Payment state machine (INITIATED → VALIDATED/FAILED) persisted in append-only PostgreSQL payment_state_log — v1.1
+- ✓ Redis rate limiting (100 req/min per merchant via INCR rate_limit:{merchant_id}:{minute_bucket}) — v1.1
+- ✓ DLQ routing with full locked contract (SCHEMA_INVALID, original_topic/offset, retry_count, first_failure_ts, payload) — v1.1
+- ✓ Downstream publish to payment.transaction.validated with merchant_id propagation — v1.1
+- ✓ 8 integration tests covering state transitions, append-only enforcement, rate limit boundary, and Kafka E2E — v1.1
 
 ### Active
 
-- [ ] Schema + business-rule validation layer consuming payment.webhook.received
-- [ ] Payment state machine (INITIATED → VALIDATED → SCORING → AUTHORIZED → SETTLED / FLAGGED)
 - [ ] Spark Structured Streaming feature engineering (velocity, z-score, merchant risk)
 - [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
 - [ ] Double-entry financial ledger (append-only, DB trigger enforces balanced entries)
@@ -44,7 +48,8 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 
 Python 3.11, Docker + Docker Compose for local dev, Windows 11 PowerShell environment.
 Stack: FastAPI 0.115+ · Kafka 3.7+ · Redis 7.2+ · Spark 3.5+ · XGBoost 2.0+ · PostgreSQL 16+ · Airflow 2.9+ · BigQuery · dbt 1.8+ · Streamlit 1.35+ · Prometheus + Grafana · GCP.
-M1 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
+v1.0 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
+v1.1 shipped 40 files changed, 5,258 insertions — 2 phases, 5 plans, 11 tasks. 8 integration tests + 11 unit tests all passing (pending human UAT on live Docker stack).
 
 ## Constraints
 
@@ -71,17 +76,23 @@ M1 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
 | `cub zk-ready` for Zookeeper health check | `nc` (netcat) not available in Confluent images | ✓ Good |
 | FastAPI lifespan over `@app.on_event` | `on_event` deprecated in FastAPI 0.115+ | ✓ Good |
 | Pydantic v2 model contracts in `models/` | No inline schemas in routes; v2 `model_validator` not `validator` | ✓ Good |
+| SQLAlchemy Core `insert()` for state machine writes | Explicit append-only semantics; no ORM session complexity | ✓ Good |
+| DB-level PL/pgSQL trigger on payment_state_log | Physically immutable audit log even if application-layer guard fails | ✓ Good |
+| DATABASE_URL_SYNC (psycopg2) separate from DATABASE_URL (asyncpg) | Alembic needs sync driver; FastAPI uses async driver | ✓ Good |
+| merchant_id on ValidatedPaymentEvent | All downstream consumers receive merchant context without re-parsing raw Stripe payload | ✓ Good |
+| Alembic migrations run at ValidationConsumer startup | Consumer owns its schema; no separate migration job or deployment step | ✓ Good |
+| Rate limiting applied to payment_intent.succeeded only | Canceled/failed events have no revenue impact and should not be throttled | ✓ Good |
+| UUID-keyed test rows for integration test isolation | append-only trigger blocks DELETE, so UUID-keyed rows are isolated by value | ✓ Good |
 
-## Current Milestone: v1.1 Validation + State Machine
+## Current Milestone: v1.2 Spark + ML Scoring
 
-**Goal:** Build the validation layer that consumes raw webhook events, enforces schema and business rules, rate-limits by merchant, drives the payment state machine into PostgreSQL, and publishes clean events downstream.
+**Goal:** Engineer the 8 ML input features via Spark Structured Streaming consuming `payment.transaction.validated`, then score transactions with XGBoost (p99 < 100ms SLA) and publish scored events downstream.
 
 **Target features:**
-- Kafka consumer (`validation-service`) consuming `payment.webhook.received`
-- Schema + business-rule validation with DLQ on failure
-- Redis rate limiting (100 req/min per merchant)
-- Payment state machine persisted in PostgreSQL `payment_state_log` (append-only)
-- Publish validated events to `payment.transaction.validated`
+- Spark Structured Streaming job consuming `payment.transaction.validated`
+- 8 ML input features written to Redis online feature store
+- XGBoost inference service (p99 < 100ms, Redis fallback → manual_review=true)
+- Publish to `payment.transaction.scored` and `payment.alert.triggered`
 
 ## Evolution
 
@@ -101,4 +112,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-22 after v1.1 milestone started*
+*Last updated: 2026-03-24 after v1.1 milestone complete*

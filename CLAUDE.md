@@ -124,8 +124,7 @@ M1: Foundation + Ingestion — DONE 2026-03-22
   ✅ FastAPI webhook service with lifespan, Prometheus instrumentation
   ✅ POST /webhook: Stripe HMAC verification, Redis idempotency (Lua SET NX EX 86400), Kafka publish
   ✅ 5 unit tests passing (.venv, pytest-asyncio)
-M2: Validation Layer + State Machine — IN PROGRESS (GSD v1.1 initialized 2026-03-22)
-  ✅ GSD milestone v1.1 initialized — REQUIREMENTS.md + ROADMAP.md committed
+M2: Validation Layer + State Machine — DONE 2026-03-24 (GSD milestone v1.1 archived)
   ✅ Phase 2: Kafka Consumer + Validation + DLQ — DONE 2026-03-23
       - 02-01: Pydantic models (ValidatedPaymentEvent, DLQMessage), validation logic, DLQ producer, 9 unit tests
       - 02-02: Kafka consumer poll loop, /health on port 8002, Dockerfile, docker-compose service
@@ -134,8 +133,8 @@ M2: Validation Layer + State Machine — IN PROGRESS (GSD v1.1 initialized 2026-
       - 03-02: ValidationConsumer wired with D-03 locked order; merchant_id added to ValidatedPaymentEvent; Docker Compose → PostgreSQL
       - 03-03: 8 integration tests (QUAL-01): happy path, schema failure, rate-limit block, append-only enforcement, Kafka E2E
   ⏳ Human UAT pending: run integration tests + verify Alembic migration against live Postgres (see 03-HUMAN-UAT.md)
-  📋 Next: /gsd:discuss-phase 4 or /gsd:plan-phase 4
-M3: Spark Feature Engineering — TODO
+M3: Spark Feature Engineering — TODO (GSD milestone: v1.2 — Phase 4)
+  📋 Next: /gsd:new-milestone → then /gsd:discuss-phase 4
 M4: ML Risk Scoring Service — TODO
 M5: Financial Ledger — TODO
 M6: Reconciliation + Airflow — TODO

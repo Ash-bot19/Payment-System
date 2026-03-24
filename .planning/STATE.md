@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Validation + State Machine
-status: unknown
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-24T07:15:58.618Z"
+milestone: v1.2
+milestone_name: Spark + ML Scoring
+status: planning
+stopped_at: v1.1 milestone complete — ready for /gsd:new-milestone
+last_updated: "2026-03-24T07:54:58.173Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -16,10 +16,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-22 after v1.1 milestone started)
+See: .planning/PROJECT.md (updated 2026-03-24 after v1.1 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 03 — state-machine-rate-limiting-downstream-publish
+**Current focus:** v1.1 complete — planning v1.2 Spark + ML Scoring (Phase 4)
 
 ## Current Position
 

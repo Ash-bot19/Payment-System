@@ -1,5 +1,19 @@
 # Milestones
 
+## v1.1 Validation + State Machine (Shipped: 2026-03-24)
+
+**Phases completed:** 2 phases, 5 plans, 11 tasks
+
+**Key accomplishments:**
+
+- Pydantic v2 validation models (ValidatedPaymentEvent, DLQMessage), pure validate_event function with schema + business-rule checks, DLQProducer with 3-retry exponential backoff, and 11 passing unit tests
+- Synchronous ValidationConsumer poll loop wiring validate_event() and DLQProducer into a running Kafka service with manual offset commit, threaded /health on port 8002, and a Docker Compose service definition
+- Alembic migration creating append-only payment_state_log with PL/pgSQL UPDATE/DELETE triggers, plus injectable PaymentStateMachine, MerchantRateLimiter (Redis INCR), and ValidatedEventProducer (mirrors DLQProducer) — all standalone testable classes
+- ValidationConsumer fully wired following D-03 processing order — rate limiting, state machine writes, and payment.transaction.validated publish with merchant_id propagated to all downstream consumers
+- 8 integration tests covering state machine transitions, append-only enforcement, Redis rate limiting, and Kafka downstream publish against real docker-compose infrastructure
+
+---
+
 ## v1.0 — Foundation + Ingestion
 
 **Shipped:** 2026-03-22
