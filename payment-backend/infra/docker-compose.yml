@@ -153,10 +153,16 @@ services:
       - "8002:8002"
     env_file:
       - ../.env
+    environment:
+      - DATABASE_URL_SYNC=postgresql://payment:payment@postgres:5432/payment_db
+      - REDIS_URL=redis://redis:6379/0
+      - DEFAULT_MERCHANT_ID=test_merchant
     depends_on:
       kafka:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
