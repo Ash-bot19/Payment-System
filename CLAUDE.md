@@ -126,11 +126,15 @@ M1: Foundation + Ingestion — DONE 2026-03-22
   ✅ 5 unit tests passing (.venv, pytest-asyncio)
 M2: Validation Layer + State Machine — IN PROGRESS (GSD v1.1 initialized 2026-03-22)
   ✅ GSD milestone v1.1 initialized — REQUIREMENTS.md + ROADMAP.md committed
-  ✅ Phase 2: Kafka Consumer + Validation + DLQ — PLANNED 2026-03-23
+  ✅ Phase 2: Kafka Consumer + Validation + DLQ — DONE 2026-03-23
       - 02-01: Pydantic models (ValidatedPaymentEvent, DLQMessage), validation logic, DLQ producer, 9 unit tests
       - 02-02: Kafka consumer poll loop, /health on port 8002, Dockerfile, docker-compose service
-  ⏳ Phase 3: State Machine + Rate Limiting + Downstream Publish — ready to plan
-  📋 Resume: /gsd:execute-phase 2
+  ✅ Phase 3: State Machine + Rate Limiting + Downstream Publish — DONE 2026-03-24
+      - 03-01: Alembic setup + payment_state_log migration (append-only DB trigger), PaymentStateMachine, MerchantRateLimiter, ValidatedEventProducer
+      - 03-02: ValidationConsumer wired with D-03 locked order; merchant_id added to ValidatedPaymentEvent; Docker Compose → PostgreSQL
+      - 03-03: 8 integration tests (QUAL-01): happy path, schema failure, rate-limit block, append-only enforcement, Kafka E2E
+  ⏳ Human UAT pending: run integration tests + verify Alembic migration against live Postgres (see 03-HUMAN-UAT.md)
+  📋 Next: /gsd:discuss-phase 4 or /gsd:plan-phase 4
 M3: Spark Feature Engineering — TODO
 M4: ML Risk Scoring Service — TODO
 M5: Financial Ledger — TODO
