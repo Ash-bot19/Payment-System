@@ -97,7 +97,7 @@ Spark checkpoint dir = GCS bucket, never /tmp
 ## Naming Conventions
 Python: snake_case functions/vars, PascalCase classes
 DB tables: snake_case, plural (payment_transactions, ledger_entries)
-Redis keys: prefix:identifier (idempotency:xxx, rate_limit:xxx, feat:xxx, merchant:risk:xxx, merchant:stats:xxx, device_seen:xxx, velocity:1m:xxx:epoch_minute, velocity:5m:xxx:epoch_minute)
+Redis keys: prefix:identifier (idempotency:xxx, rate_limit:xxx, feat:xxx)
 Kafka consumer groups: service-name (e.g. validation-service)
 dbt models: stg_ (staging), dim_ (dimension), fact_ (fact), no prefix (mart)
 Environment vars: SCREAMING_SNAKE_CASE
@@ -133,8 +133,12 @@ M2: Validation Layer + State Machine — DONE 2026-03-24 (GSD milestone v1.1 arc
       - 03-02: ValidationConsumer wired with D-03 locked order; merchant_id added to ValidatedPaymentEvent; Docker Compose → PostgreSQL
       - 03-03: 8 integration tests (QUAL-01): happy path, schema failure, rate-limit block, append-only enforcement, Kafka E2E
   ⏳ Human UAT pending: run integration tests + verify Alembic migration against live Postgres (see 03-HUMAN-UAT.md)
-M3: Spark Feature Engineering — TODO (GSD milestone: v1.2 — Phase 4)
-  📋 Next: /gsd:new-milestone → then /gsd:discuss-phase 4
+M3: Spark Feature Engineering — PLANNED 2026-03-24 (GSD milestone: v1.2 — Phase 4)
+  📋 Phase 4 fully planned — 3 plans, 3 waves, all FEAT-01–FEAT-12 covered
+      - 04-01: feature_functions.py (Welford zscore, pure transforms) + redis_sink.py (foreachBatch) + 16 unit tests
+      - 04-02: feature_engineering.py (SparkSession, startup validator, Kafka readStream, velocity windows → Redis, 3 writeStream queries)
+      - 04-03: spark/Dockerfile, docker-compose spark-feature-engine service (port 4040, named checkpoint volume), E2E integration test
+  📋 Next: /gsd:execute-phase 4 (after /clear)
 M4: ML Risk Scoring Service — TODO
 M5: Financial Ledger — TODO
 M6: Reconciliation + Airflow — TODO
