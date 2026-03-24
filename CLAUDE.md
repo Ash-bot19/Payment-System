@@ -97,7 +97,7 @@ Spark checkpoint dir = GCS bucket, never /tmp
 ## Naming Conventions
 Python: snake_case functions/vars, PascalCase classes
 DB tables: snake_case, plural (payment_transactions, ledger_entries)
-Redis keys: prefix:identifier (idempotency:xxx, rate_limit:xxx, feat:xxx)
+Redis keys: prefix:identifier (idempotency:xxx, rate_limit:xxx, feat:xxx, merchant:risk:xxx, merchant:stats:xxx, device_seen:xxx, velocity:1m:xxx:epoch_minute, velocity:5m:xxx:epoch_minute)
 Kafka consumer groups: service-name (e.g. validation-service)
 dbt models: stg_ (staging), dim_ (dimension), fact_ (fact), no prefix (mart)
 Environment vars: SCREAMING_SNAKE_CASE
