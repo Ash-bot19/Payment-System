@@ -25,7 +25,7 @@
 - [x] **SM-01**: `payment_state_log` table created via Alembic migration (append-only — no UPDATE, no DELETE)
 - [x] **SM-02**: Valid event writes INITIATED → VALIDATED transition to `payment_state_log`
 - [x] **SM-03**: Failed or rate-limited event writes → FAILED transition to `payment_state_log`
-- [ ] **SM-04**: Validated event published to `payment.transaction.validated` Kafka topic
+- [x] **SM-04**: Validated event published to `payment.transaction.validated` Kafka topic
 
 ### Quality
 
@@ -75,7 +75,7 @@
 | SM-01 | Phase 3 | Complete |
 | SM-02 | Phase 3 | Complete |
 | SM-03 | Phase 3 | Complete |
-| SM-04 | Phase 3 | Pending |
+| SM-04 | Phase 3 | Complete |
 | RATELIMIT-01 | Phase 3 | Complete |
 | QUAL-01 | Phase 3 | Pending |
 
