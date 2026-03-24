@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Validation + State Machine
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-23T13:01:39.536Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-24T07:06:13.279Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22 after v1.1 milestone started)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 02 — Kafka Consumer + Validation + DLQ
+**Current focus:** Phase 03 — state-machine-rate-limiting-downstream-publish
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (state-machine-rate-limiting-downstream-publish) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Plan: Not started
 | 1. Foundation + Ingestion | 1 | 1 session | - |
 | Phase 02-kafka-consumer-validation-dlq P01 | pre-committed | 3 tasks | 4 files |
 | Phase 02-kafka-consumer-validation-dlq P02 | 4 | 2 tasks | 4 files |
+| Phase 03 P01 | 186 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 02]: DLQProducer crash-on-exhaustion (re-raise KafkaException) preferred over silent drop — Docker restart replays message per D-17
 - [Phase 02-kafka-consumer-validation-dlq]: Threaded http.server for /health endpoint — zero-dependency health check, avoids uvicorn for pure consumer service
 - [Phase 02-kafka-consumer-validation-dlq]: DLQ publish before offset commit — silent drops impossible; DLQ failure triggers crash-and-restart via Docker
+- [Phase 03-01]: SQLAlchemy Core insert() for PaymentStateMachine writes — explicit append-only semantics, no ORM session complexity
+- [Phase 03-01]: DB-level PL/pgSQL trigger enforces append-only on payment_state_log — physically immutable audit log
+- [Phase 03-01]: DATABASE_URL_SYNC (psycopg2) separate from DATABASE_URL (asyncpg) for Alembic vs FastAPI
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-23T12:53:32.078Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-03-24T07:06:13.275Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

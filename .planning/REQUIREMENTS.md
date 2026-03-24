@@ -18,13 +18,13 @@
 
 ### Rate Limiting
 
-- [ ] **RATELIMIT-01**: Requests exceeding 100/min per merchant trigger rate-limit path via `INCR rate_limit:{merchant_id}:{minute_bucket}` in Redis
+- [x] **RATELIMIT-01**: Requests exceeding 100/min per merchant trigger rate-limit path via `INCR rate_limit:{merchant_id}:{minute_bucket}` in Redis
 
 ### State Machine
 
-- [ ] **SM-01**: `payment_state_log` table created via Alembic migration (append-only — no UPDATE, no DELETE)
-- [ ] **SM-02**: Valid event writes INITIATED → VALIDATED transition to `payment_state_log`
-- [ ] **SM-03**: Failed or rate-limited event writes → FAILED transition to `payment_state_log`
+- [x] **SM-01**: `payment_state_log` table created via Alembic migration (append-only — no UPDATE, no DELETE)
+- [x] **SM-02**: Valid event writes INITIATED → VALIDATED transition to `payment_state_log`
+- [x] **SM-03**: Failed or rate-limited event writes → FAILED transition to `payment_state_log`
 - [ ] **SM-04**: Validated event published to `payment.transaction.validated` Kafka topic
 
 ### Quality
@@ -72,11 +72,11 @@
 | VALID-02 | Phase 2 | Complete |
 | VALID-03 | Phase 2 | Complete |
 | QUAL-02 | Phase 2 | Complete |
-| SM-01 | Phase 3 | Pending |
-| SM-02 | Phase 3 | Pending |
-| SM-03 | Phase 3 | Pending |
+| SM-01 | Phase 3 | Complete |
+| SM-02 | Phase 3 | Complete |
+| SM-03 | Phase 3 | Complete |
 | SM-04 | Phase 3 | Pending |
-| RATELIMIT-01 | Phase 3 | Pending |
+| RATELIMIT-01 | Phase 3 | Complete |
 | QUAL-01 | Phase 3 | Pending |
 
 **Coverage:**
