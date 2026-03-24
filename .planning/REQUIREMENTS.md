@@ -29,7 +29,7 @@
 
 ### Quality
 
-- [ ] **QUAL-01**: Integration tests covering happy path, schema failure → DLQ, rate limit, and state transitions
+- [x] **QUAL-01**: Integration tests covering happy path, schema failure → DLQ, rate limit, and state transitions
 - [x] **QUAL-02**: Unit tests for business rule validation logic
 
 ## Future Requirements (Deferred)
@@ -77,7 +77,7 @@
 | SM-03 | Phase 3 | Complete |
 | SM-04 | Phase 3 | Complete |
 | RATELIMIT-01 | Phase 3 | Complete |
-| QUAL-01 | Phase 3 | Pending |
+| QUAL-01 | Phase 3 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 12 total

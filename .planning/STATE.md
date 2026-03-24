@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Validation + State Machine
 status: unknown
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-24T07:11:40.471Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-24T07:15:58.618Z"
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -42,6 +42,7 @@ Plan: 3 of 3
 | Phase 02-kafka-consumer-validation-dlq P02 | 4 | 2 tasks | 4 files |
 | Phase 03 P01 | 186 | 2 tasks | 9 files |
 | Phase 03-state-machine-rate-limiting-downstream-publish P02 | 15 | 2 tasks | 5 files |
+| Phase 03-state-machine-rate-limiting-downstream-publish P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 03]: merchant_id added to ValidatedPaymentEvent so all downstream consumers receive merchant context without re-parsing raw Stripe payload
 - [Phase 03]: Rate-limiting applied only to payment_intent.succeeded events — canceled/failed events have no revenue impact and should not be throttled
 - [Phase 03]: Alembic migrations run at ValidationConsumer startup via _run_migrations() — consumer owns its schema, no separate migration job needed
+- [Phase 03]: DB isolation via unique transaction_ids per test — append-only trigger blocks DELETE so UUID-keyed rows are isolated by value
+- [Phase 03]: Kafka test isolation via AdminClient-created UUID-suffixed topics — avoids auto-create restriction and guarantees zero cross-test contamination
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-24T07:11:40.466Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-24T07:15:58.615Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
