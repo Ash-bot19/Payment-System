@@ -44,7 +44,7 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 
 </details>
 
-### 📋 v1.2 Spark + ML Scoring (Planned)
+### v1.2 Spark + ML Scoring (Planned)
 
 **Milestone Goal:** Engineer the 8 ML input features via Spark Structured Streaming and score transactions with XGBoost (p99 < 100ms).
 
@@ -52,7 +52,13 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 
 **Goal**: Spark Structured Streaming job consuming `payment.transaction.validated`, engineering all 8 ML input features, writing to Redis online feature store with GCS checkpoint.
 **Depends on**: Phase 3
-**Plans**: TBD
+**Requirements**: FEAT-01, FEAT-02, FEAT-03, FEAT-04, FEAT-05, FEAT-06, FEAT-07, FEAT-08, FEAT-09, FEAT-10, FEAT-11, FEAT-12
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Pure feature functions (Welford zscore, hour/weekend/log transforms) + Redis sink foreachBatch + unit tests
+- [ ] 04-02-PLAN.md — Main streaming job entry point: Kafka readStream, velocity windows, column transforms, 3 writeStream queries + integration tests
+- [ ] 04-03-PLAN.md — Spark Dockerfile, docker-compose service, end-to-end Kafka-to-Redis integration test
 
 #### Phase 5: ML Risk Scoring Service
 
@@ -60,7 +66,7 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 **Depends on**: Phase 4
 **Plans**: TBD
 
-### 📋 v1.3 Ledger + Reconciliation (Planned)
+### v1.3 Ledger + Reconciliation (Planned)
 
 **Milestone Goal:** Persist every settled transaction as balanced double-entry ledger entries and run nightly Airflow reconciliation against Stripe.
 
@@ -76,7 +82,7 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 **Depends on**: Phase 6
 **Plans**: TBD
 
-### 📋 v2.0 Analytics + Deploy (Planned)
+### v2.0 Analytics + Deploy (Planned)
 
 **Milestone Goal:** BigQuery warehouse, dbt transformation layer, Streamlit dashboard, and full GCP production deployment with CI/CD.
 
@@ -111,7 +117,7 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 | 1. Foundation + Ingestion | v1.0 | 1/1 | Complete | 2026-03-22 |
 | 2. Kafka Consumer + Validation + DLQ | v1.1 | 2/2 | Complete   | 2026-03-23 |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete   | 2026-03-24 |
-| 4. Spark Feature Engineering | v1.2 | 0/TBD | Not started | - |
+| 4. Spark Feature Engineering | v1.2 | 0/3 | Planning | - |
 | 5. ML Risk Scoring Service | v1.2 | 0/TBD | Not started | - |
 | 6. Financial Ledger | v1.3 | 0/TBD | Not started | - |
 | 7. Reconciliation + Airflow | v1.3 | 0/TBD | Not started | - |
