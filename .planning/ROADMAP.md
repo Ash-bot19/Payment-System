@@ -65,10 +65,12 @@ Plans:
   4. Merchants sending more than 100 events within a 60-second bucket are blocked via `INCR rate_limit:{merchant_id}:{minute_bucket}` in Redis and their events write FAILED to the state log
   5. Validated events appear on `payment.transaction.validated` after the state transition commits — no publish occurs for failed events
   6. Integration tests covering happy path, schema failure → DLQ, rate-limit block, and state transitions all pass
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Alembic migration, SQLAlchemy models, PaymentStateMachine, MerchantRateLimiter, ValidatedEventProducer
+- [ ] 03-02-PLAN.md — Wire state machine + rate limiter + producer into ValidationConsumer, update Docker config
+- [ ] 03-03-PLAN.md — Integration tests (QUAL-01): state transitions, rate limiting, downstream publish
 
 ### 📋 v1.2 Spark + ML Scoring (Planned)
 
@@ -157,7 +159,7 @@ Plans:
   4. Merchants sending more than 100 events within a 60-second bucket are blocked via `INCR rate_limit:{merchant_id}:{minute_bucket}` in Redis and their events write FAILED to the state log
   5. Validated events appear on `payment.transaction.validated` after the state transition commits — no publish occurs for failed events
   6. Integration tests covering happy path, schema failure → DLQ, rate-limit block, and state transitions all pass
-**Plans**: TBD
+**Plans**: 3 plans
 
 ## Progress
 
@@ -165,7 +167,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1. Foundation + Ingestion | v1.0 | 1/1 | Complete | 2026-03-22 |
 | 2. Kafka Consumer + Validation + DLQ | v1.1 | 2/2 | Complete   | 2026-03-23 |
-| 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 0/TBD | Not started | - |
+| 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 0/3 | Not started | - |
 | 4. Spark Feature Engineering | v1.2 | 0/TBD | Not started | - |
 | 5. ML Risk Scoring Service | v1.2 | 0/TBD | Not started | - |
 | 6. Financial Ledger | v1.3 | 0/TBD | Not started | - |
