@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Spark + ML Scoring
-status: planning
-stopped_at: v1.1 milestone complete — ready for /gsd:new-milestone
-last_updated: "2026-03-24T07:54:58.173Z"
+status: unknown
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-25T08:01:49.528Z"
 progress:
   total_phases: 2
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24 after v1.1 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** v1.1 complete — planning v1.2 Spark + ML Scoring (Phase 4)
+**Current focus:** Phase 04 — spark-feature-engineering
 
 ## Current Position
 
-Phase: 03 (state-machine-rate-limiting-downstream-publish) — EXECUTING
-Plan: 3 of 3
+Phase: 04 (spark-feature-engineering) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Plan: 3 of 3
 | Phase 03 P01 | 186 | 2 tasks | 9 files |
 | Phase 03-state-machine-rate-limiting-downstream-publish P02 | 15 | 2 tasks | 5 files |
 | Phase 03-state-machine-rate-limiting-downstream-publish P03 | 2 | 2 tasks | 2 files |
+| Phase 04-spark-feature-engineering P01 | 13 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 03]: Alembic migrations run at ValidationConsumer startup via _run_migrations() — consumer owns its schema, no separate migration job needed
 - [Phase 03]: DB isolation via unique transaction_ids per test — append-only trigger blocks DELETE so UUID-keyed rows are isolated by value
 - [Phase 03]: Kafka test isolation via AdminClient-created UUID-suffixed topics — avoids auto-create restriction and guarantees zero cross-test contamination
+- [Phase 04-spark-feature-engineering]: Welford count<3 threshold: need 2 prior observations for reliable variance; cold start and single-point both return 0.0
+- [Phase 04-spark-feature-engineering]: feature_functions.py uses pure Python types (not PySpark Columns) — runs inside foreachBatch on driver, not distributed executors
+- [Phase 04-spark-feature-engineering]: foreachBatch Redis pipeline requires explicit pipe.execute() — omitting causes silent zero writes with no error
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-24T07:15:58.615Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-25T08:01:49.524Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
