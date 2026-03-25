@@ -49,7 +49,12 @@ See `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 
 **Goal**: FastAPI ML scoring service running XGBoost inference (p99 < 100ms), with Redis fallback → manual_review=true on timeout, publishing to `payment.transaction.scored` and `payment.alert.triggered`.
 **Depends on**: Phase 4
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Pydantic models, XGBoost scorer, training script, model.ubj
+- [ ] 05-02-PLAN.md — ScoringConsumer, Kafka producers, FastAPI ml_service, unit/integration tests
+- [ ] 05-03-PLAN.md — Docker Compose containerization, E2E tests, human UAT
 
 ### v1.4 Ledger + Reconciliation (Planned)
 
@@ -103,7 +108,7 @@ See `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 | 2. Kafka Consumer + Validation + DLQ | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete | 2026-03-24 |
 | 4. Spark Feature Engineering | v1.2 | 3/3 | Complete | 2026-03-25 |
-| 5. ML Risk Scoring Service | v1.3 | 0/TBD | Not started | - |
+| 5. ML Risk Scoring Service | v1.3 | 0/3 | Planning complete | - |
 | 6. Financial Ledger | v1.4 | 0/TBD | Not started | - |
 | 7. Reconciliation + Airflow | v1.4 | 0/TBD | Not started | - |
 | 8. BigQuery + dbt | v2.0 | 0/TBD | Not started | - |
