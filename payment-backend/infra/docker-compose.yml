@@ -172,7 +172,29 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # --- Spark feature engine (reads payment.transaction.validated, writes features to Redis) ---
+  spark-feature-engine:
+    build:
+      context: ..
+      dockerfile: spark/Dockerfile
+    container_name: spark-feature-engine
+    ports:
+      - "4040:4040"
+    environment:
+      - SPARK_CHECKPOINT_DIR=/tmp/spark-checkpoints
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - spark_checkpoints:/tmp/spark-checkpoints
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   redis_data:
   postgres_data:
   grafana_data:
+  spark_checkpoints:
