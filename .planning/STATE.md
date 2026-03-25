@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Spark + ML Scoring
 status: unknown
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-25T08:08:20.408Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-25T08:14:19.375Z"
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -45,6 +45,7 @@ Plan: 3 of 3
 | Phase 03-state-machine-rate-limiting-downstream-publish P03 | 2 | 2 tasks | 2 files |
 | Phase 04-spark-feature-engineering P01 | 13 | 2 tasks | 8 files |
 | Phase 04 P02 | 4 | 2 tasks | 4 files |
+| Phase 04 P03 | 184 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 04-spark-feature-engineering]: foreachBatch Redis pipeline requires explicit pipe.execute() — omitting causes silent zero writes with no error
 - [Phase 04]: PySpark column expressions (F.hour, F.dayofweek, F.log1p) used for streaming transforms — pure Python feature_functions.py used inside foreachBatch on driver only
 - [Phase 04]: requires_java skipif guard added to JVM-dependent Spark tests — prevents ERROR on machines without Java, tests run in bitnami/spark Docker container
+- [Phase 04]: bitnami/spark:3.5 as Dockerfile base with spark-submit --packages for Kafka JAR (runtime download avoids 100MB in image)
+- [Phase 04]: E2E tests use static DataFrame (no live Kafka) for CI stability; validates write_features_to_redis directly against live Redis
+- [Phase 04]: requires_java guard on all Spark E2E tests — skip on local dev, run inside bitnami/spark Docker container
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25T08:08:20.403Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-25T08:14:19.371Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None

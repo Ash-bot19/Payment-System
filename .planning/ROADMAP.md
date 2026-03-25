@@ -58,7 +58,7 @@ See `.planning/milestones/v1.1-ROADMAP.md` for full phase details.
 Plans:
 - [x] 04-01-PLAN.md — Pure feature functions (Welford zscore, hour/weekend/log transforms) + Redis sink foreachBatch + unit tests
 - [x] 04-02-PLAN.md — Main streaming job entry point: Kafka readStream, velocity windows, column transforms, 3 writeStream queries + integration tests
-- [ ] 04-03-PLAN.md — Spark Dockerfile, docker-compose service, end-to-end Kafka-to-Redis integration test
+- [x] 04-03-PLAN.md — Spark Dockerfile, docker-compose service, end-to-end Kafka-to-Redis integration test
 
 #### Phase 5: ML Risk Scoring Service
 
@@ -117,7 +117,7 @@ Plans:
 | 1. Foundation + Ingestion | v1.0 | 1/1 | Complete | 2026-03-22 |
 | 2. Kafka Consumer + Validation + DLQ | v1.1 | 2/2 | Complete   | 2026-03-23 |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete   | 2026-03-24 |
-| 4. Spark Feature Engineering | v1.2 | 2/3 | In Progress|  |
+| 4. Spark Feature Engineering | v1.2 | 3/3 | Complete   | 2026-03-25 |
 | 5. ML Risk Scoring Service | v1.2 | 0/TBD | Not started | - |
 | 6. Financial Ledger | v1.3 | 0/TBD | Not started | - |
 | 7. Reconciliation + Airflow | v1.3 | 0/TBD | Not started | - |
