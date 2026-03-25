@@ -1,25 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Spark + ML Scoring
-status: unknown
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-25T08:18:18.966Z"
+milestone: v1.3
+milestone_name: ML Risk Scoring
+status: planning
+stopped_at: v1.2 archived — ready for Phase 5 planning
+last_updated: "2026-03-25T13:08:20.569Z"
 progress:
-  total_phases: 2
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24 after v1.1 milestone complete)
+See: .planning/PROJECT.md (updated 2026-03-25 after v1.2 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 04 — spark-feature-engineering
+**Current focus:** Phase 05 — ML Risk Scoring Service (v1.3)
 
 ## Current Position
 

@@ -1,5 +1,18 @@
 # Milestones
 
+## v1.2 Spark Feature Engineering (Shipped: 2026-03-25)
+
+**Phases completed:** 1 phases, 3 plans, 6 tasks
+
+**Key accomplishments:**
+
+- Pure Welford z-score, device-switch tracking, and foreachBatch Redis pipeline covering all 8 ML input features, with 23 unit tests passing.
+- Spark Structured Streaming entry point (feature_engineering.py) with 3 concurrent streaming queries: velocity_1m/velocity_5m writing to Redis velocity keys, enriched events stream adding hour_of_day/weekend_flag/amount_cents_log via PySpark column expressions, and 11 integration tests
+- Spark containerized (python:3.11-slim + openjdk-21 + pyspark pip install) with docker-compose spark-feature-engine service (port 4040), named checkpoint volume, and 3 E2E tests validating full foreachBatch pipeline against live Redis
+- Human UAT passed: all 8 feat:{event_id} Redis fields verified live (hour_of_day, amount_cents_log, merchant_risk_score default, Welford zscore cold-start)
+
+---
+
 ## v1.1 Validation + State Machine (Shipped: 2026-03-24)
 
 **Phases completed:** 2 phases, 5 plans, 11 tasks

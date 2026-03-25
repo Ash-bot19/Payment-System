@@ -25,14 +25,14 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 - ✓ DLQ routing with full locked contract (SCHEMA_INVALID, original_topic/offset, retry_count, first_failure_ts, payload) — v1.1
 - ✓ Downstream publish to payment.transaction.validated with merchant_id propagation — v1.1
 - ✓ 8 integration tests covering state transitions, append-only enforcement, rate limit boundary, and Kafka E2E — v1.1
-- ✓ Spark Structured Streaming pipeline: 3 concurrent queries (velocity_1m, velocity_5m, enriched features), all 8 ML features written to Redis feat:{event_id} hash — v1.2 (Validated in Phase 04: spark-feature-engineering)
+- ✓ Spark Structured Streaming pipeline: 3 concurrent queries (velocity_1m, velocity_5m, enriched features), all 8 ML features written to Redis feat:{event_id} hash — v1.2
 - ✓ Welford online z-score algorithm for amount_zscore computation (cold-start safe, requires ≥3 observations) — v1.2
-- ✓ Spark Dockerfile (bitnami/spark:3.5) + docker-compose service with named checkpoint volume — v1.2
+- ✓ Spark Dockerfile (python:3.11-slim + openjdk-21 + pyspark pip) + docker-compose service with named checkpoint volume — v1.2
 - ✓ 37 tests: 23 unit (feature_functions + redis_sink) + 11 integration + 3 E2E (Redis) — v1.2
+- ✓ Human UAT: all 8 feat:{event_id} Redis fields verified live against running docker-compose stack — v1.2
 
 ### Active
 
-- [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
 - [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
 - [ ] Double-entry financial ledger (append-only, DB trigger enforces balanced entries)
 - [ ] Apache Airflow nightly reconciliation DAG
@@ -54,7 +54,7 @@ Python 3.11, Docker + Docker Compose for local dev, Windows 11 PowerShell enviro
 Stack: FastAPI 0.115+ · Kafka 3.7+ · Redis 7.2+ · Spark 3.5+ · XGBoost 2.0+ · PostgreSQL 16+ · Airflow 2.9+ · BigQuery · dbt 1.8+ · Streamlit 1.35+ · Prometheus + Grafana · GCP.
 v1.0 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
 v1.1 shipped 40 files changed, 5,258 insertions — 2 phases, 5 plans, 11 tasks. 8 integration tests + 11 unit tests all passing (pending human UAT on live Docker stack).
-v1.2 shipped Phase 04 complete — Spark feature engineering pipeline. 3 plans, 3 waves, 37 tests (23 unit + 11 integration + 3 E2E). All 8 ML features computed and written to Redis.
+v1.2 shipped Phase 04 complete — Spark feature engineering pipeline. 3 plans, 6 tasks, 37 tests (23 unit + 11 integration + 3 E2E). All 8 ML features computed and written to Redis. Human UAT passed 2026-03-25.
 
 Last updated: 2026-03-25
 
@@ -90,15 +90,20 @@ Last updated: 2026-03-25
 | Alembic migrations run at ValidationConsumer startup | Consumer owns its schema; no separate migration job or deployment step | ✓ Good |
 | Rate limiting applied to payment_intent.succeeded only | Canceled/failed events have no revenue impact and should not be throttled | ✓ Good |
 | UUID-keyed test rows for integration test isolation | append-only trigger blocks DELETE, so UUID-keyed rows are isolated by value | ✓ Good |
+| pip-installed PySpark vs bitnami/spark base image | bitnami/spark:3.5 removed from Docker Hub during UAT; pip install bundles Spark binaries cleanly | ✓ Good |
+| 3 separate writeStream queries vs one joined query | Windowed aggregations require `update` output mode, incompatible with `append` needed for per-event features | ✓ Good |
+| Welford online algorithm for amount_zscore | BigQuery offline features don't exist yet; Welford gives online approximation with no external dependency | ✓ Good |
+| foreachBatch + redis-py pipeline vs mapGroupsWithState | foreachBatch runs on driver with full redis-py access; mapGroupsWithState requires Spark-serializable state — unnecessary complexity | ✓ Good |
+| ENV PYTHONPATH=/app in Dockerfile | spark-submit doesn't add CWD to sys.path; Dockerfile-level fix cleaner than patching application code | ✓ Good |
 
-## Current Milestone: v1.2 Spark + ML Scoring
+## Current Milestone: v1.3 ML Risk Scoring
 
-**Goal:** Engineer the 8 ML input features via Spark Structured Streaming consuming `payment.transaction.validated`, then score transactions with XGBoost (p99 < 100ms SLA) and publish scored events downstream.
+**Goal:** Score transactions with XGBoost (p99 < 100ms SLA) by reading the 8 ML features from Redis, running inference, and publishing scored events downstream.
 
 **Target features:**
-- Spark Structured Streaming job consuming `payment.transaction.validated`
-- 8 ML input features written to Redis online feature store
-- XGBoost inference service (p99 < 100ms, Redis fallback → manual_review=true)
+- FastAPI ML scoring service consuming `payment.transaction.validated`
+- Read `feat:{event_id}` + `velocity:1m/5m:` keys from Redis to assemble feature vector
+- XGBoost inference (p99 < 100ms, Redis fallback → manual_review=true on timeout)
 - Publish to `payment.transaction.scored` and `payment.alert.triggered`
 
 ## Evolution
@@ -119,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after v1.1 milestone complete*
+*Last updated: 2026-03-25 after v1.2 milestone complete*

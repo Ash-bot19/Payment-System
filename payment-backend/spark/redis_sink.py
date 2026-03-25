@@ -85,14 +85,14 @@ def write_features_to_redis(batch_df, epoch_id: int) -> None:
         pipe.hset(
             feat_key,
             mapping={
-                "tx_velocity_1m": getattr(row, "tx_velocity_1m", 0),
-                "tx_velocity_5m": getattr(row, "tx_velocity_5m", 0),
+                "tx_velocity_1m": getattr(row, "tx_velocity_1m", None) or 0,
+                "tx_velocity_5m": getattr(row, "tx_velocity_5m", None) or 0,
                 "amount_zscore": amount_zscore,
                 "merchant_risk_score": merchant_risk,
                 "device_switch_flag": device_switch,
-                "hour_of_day": row.hour_of_day,
-                "weekend_flag": row.weekend_flag,
-                "amount_cents_log": row.amount_cents_log,
+                "hour_of_day": row.hour_of_day if row.hour_of_day is not None else 0,
+                "weekend_flag": row.weekend_flag if row.weekend_flag is not None else 0,
+                "amount_cents_log": row.amount_cents_log if row.amount_cents_log is not None else 0.0,
             },
         )
         pipe.expire(feat_key, FEATURE_TTL)

@@ -98,9 +98,59 @@
 
 ---
 
+## Milestone: v1.2 — Spark Feature Engineering
+
+**Shipped:** 2026-03-25
+**Phases:** 1 (Phase 4) | **Plans:** 3 | **Tasks:** 6
+
+### What Was Built
+
+- `spark/feature_functions.py`: 4 pure Python feature transforms — `compute_hour_of_day`, `compute_weekend_flag`, `compute_amount_cents_log`, `update_merchant_stats_and_zscore` (Welford online algorithm)
+- `spark/redis_sink.py`: `write_features_to_redis()` foreachBatch handler — merchant risk lookup, device switch flag, Welford z-score, all 8 features written as Redis Hash `feat:{event_id}` with TTL 3600s
+- `spark/feature_engineering.py`: spark-submit entry point with `validate_env()` startup gate, Kafka `readStream`, 3 concurrent `writeStream` queries, `awaitAnyTermination()`
+- `spark/Dockerfile`: `python:3.11-slim` + `openjdk-21` + `pyspark==3.5.1` via pip; Kafka JAR fetched at runtime via `--packages`
+- `spark-feature-engine` docker-compose service: port 4040, named `spark_checkpoints` volume, `depends_on: kafka + redis: service_healthy`
+- 37 tests: 23 unit + 11 integration + 3 E2E; JVM-dependent tests skip gracefully on machines without Java
+
+### What Worked
+
+- **validate_env() before SparkSession.getOrCreate()**: Failing fast on bad config (missing SPARK_CHECKPOINT_DIR, KAFKA_BOOTSTRAP_SERVERS, REDIS_URL) before the JVM starts saved debugging time — SparkSession initialization noise makes later errors hard to surface.
+- **foreachBatch on driver with redis-py pipeline**: Simpler than any distributed state alternative. One Redis connection per micro-batch, all writes buffered in `pipe`, single `pipe.execute()`. Clean and testable without Spark infrastructure.
+- **Welford online algorithm**: Correct choice for streaming — no external dependency, improves with each observation, cold-start safe with count<3 threshold.
+- **3 separate writeStream queries**: Output mode incompatibility (update vs append) forced this, but it turned out to be a clean separation — velocity writes are independent of per-event enrichment.
+- **requires_java skip guard**: Preventing JVM-dependent tests from ERROR-ing on dev machines (rather than just SKIP) was the right call. Clean test runs without infrastructure.
+
+### What Was Inefficient
+
+- **bitnami/spark:3.5 base image**: The Dockerfile was written with `bitnami/spark:3.5` as the base, but this image was removed from Docker Hub before UAT. Wasted one rebuild cycle. Should pin or verify image availability before writing the Dockerfile.
+- **UAT test message field names**: Test message used `customer_id` and `created_at` instead of the Spark schema's `stripe_customer_id` and `received_at`. Spark silently null-filled the fields with no error — only surfaced as a Redis `DataError` at write time. More intuitive debugging would have been faster.
+- **Two separate bugs for the same symptom**: Both wrong field names AND missing None guards caused the same `DataError`. Could have been caught earlier with a schema validation step in the UAT checklist.
+
+### Patterns Established
+
+- **PYTHONPATH in Dockerfile for spark-submit jobs**: `ENV PYTHONPATH=/app` is required for any Dockerfile using spark-submit with relative package imports.
+- **None guards on all Redis hash values from Spark DataFrames**: Spark columns null-propagate silently. Always use `value if value is not None else default` before `pipe.hset()`.
+- **UAT checklist must include schema field name verification**: Test messages must exactly match the Spark schema field names — mismatches are completely silent.
+- **pip-installed PySpark over bitnami/spark base**: More reliable than third-party base images. PySpark bundles its own Spark binaries. Use `python:3.11-slim` + apt Java + `pip install pyspark`.
+
+### Key Lessons
+
+1. Third-party Docker base images can disappear. Prefer official language images (`python:3.11-slim`) + framework install via pip/apt over curated distro images for frameworks.
+2. Spark null propagation is silent and type-unsafe at the Python boundary. Treat every Spark column value as potentially None when passing to external systems.
+3. The output mode split (velocity queries: `update`, features query: `append`) is a Spark constraint, not a design choice — document it clearly so future engineers don't try to consolidate the queries.
+4. `pipe.execute()` must be explicit — Redis pipeline buffers silently, omitting it causes zero writes with no error. Comment it in the code.
+
+### Cost Observations
+
+- Sessions: 1
+- Notable: All 3 plans executed sequentially (04-01 → 04-02 → 04-03) due to hard dependency chain. UAT revealed 5 container bugs not caught by unit/integration tests — validated the value of human UAT on the real Docker stack.
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | LOC Added | Sessions | Bugs Found |
 |-----------|--------|-----------|----------|------------|
 | v1.0 Foundation + Ingestion | 1 | ~534 | 1 | 5 |
 | v1.1 Validation + State Machine | 2 | ~5,258 | 2 | 2 (CLAUDE.md pointer, DATABASE_URL_SYNC) |
+| v1.2 Spark Feature Engineering | 1 | ~504 (Phase 4 code) | 1 | 5 (bitnami removed, openjdk-17 gone, PYTHONPATH, field name mismatch, None guards) |
