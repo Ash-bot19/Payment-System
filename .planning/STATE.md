@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: ML Risk Scoring
-status: planning
-stopped_at: v1.2 archived — ready for Phase 5 planning
-last_updated: "2026-03-25T13:08:20.569Z"
+status: unknown
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-25T19:24:20.038Z"
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25 after v1.2 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 05 — ML Risk Scoring Service (v1.3)
+**Current focus:** Phase 05 — ml-risk-scoring
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (ml-risk-scoring) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Plan: Not started
 | Phase 04-spark-feature-engineering P01 | 13 | 2 tasks | 8 files |
 | Phase 04 P02 | 4 | 2 tasks | 4 files |
 | Phase 04 P03 | 184 | 2 tasks | 4 files |
+| Phase 05-ml-risk-scoring P01 | 8 | 1 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 04]: bitnami/spark:3.5 as Dockerfile base with spark-submit --packages for Kafka JAR (runtime download avoids 100MB in image)
 - [Phase 04]: E2E tests use static DataFrame (no live Kafka) for CI stability; validates write_features_to_redis directly against live Redis
 - [Phase 04]: requires_java guard on all Spark E2E tests — skip on local dev, run inside bitnami/spark Docker container
+- [Phase 05-ml-risk-scoring]: model.ubj committed to repo (D-A1) — not a Docker volume, not a registry; zero runtime dependency on training infra
+- [Phase 05-ml-risk-scoring]: crash-and-exit (sys.exit(1)) for missing model at startup — distinguishes misconfiguration from runtime Redis-timeout fallback (D-A3)
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25T08:14:19.371Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-25T19:24:20.035Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
