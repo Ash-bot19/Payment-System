@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: ML Risk Scoring
 status: unknown
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-25T19:24:20.038Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-25T19:33:12.276Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25 after v1.2 milestone complete)
 ## Current Position
 
 Phase: 05 (ml-risk-scoring) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 3
 | Phase 04 P02 | 4 | 2 tasks | 4 files |
 | Phase 04 P03 | 184 | 2 tasks | 4 files |
 | Phase 05-ml-risk-scoring P01 | 8 | 1 tasks | 8 files |
+| Phase 05 P02 | 387 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 04]: requires_java guard on all Spark E2E tests — skip on local dev, run inside bitnami/spark Docker container
 - [Phase 05-ml-risk-scoring]: model.ubj committed to repo (D-A1) — not a Docker volume, not a registry; zero runtime dependency on training infra
 - [Phase 05-ml-risk-scoring]: crash-and-exit (sys.exit(1)) for missing model at startup — distinguishes misconfiguration from runtime Redis-timeout fallback (D-A3)
+- [Phase 05]: FastAPI lifespan over @app.on_event for ml_service model load — on_event deprecated in FastAPI 0.115+
+- [Phase 05]: model.ubj lives at ml/models/model.ubj (not ml/model.ubj) — confirmed on filesystem during Phase 05-02 test run
 
 ### Pending Todos
 
@@ -99,6 +102,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:24:20.035Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-25T19:33:12.269Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

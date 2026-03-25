@@ -53,7 +53,7 @@ See `.planning/milestones/v1.2-ROADMAP.md` for full phase details.
 
 Plans:
 - [x] 05-01-PLAN.md — Pydantic models, XGBoost scorer, training script, model.ubj
-- [ ] 05-02-PLAN.md — ScoringConsumer, Kafka producers, FastAPI ml_service, unit/integration tests
+- [x] 05-02-PLAN.md — ScoringConsumer, Kafka producers, FastAPI ml_service, unit/integration tests
 - [ ] 05-03-PLAN.md — Docker Compose containerization, E2E tests, human UAT
 
 ### v1.4 Ledger + Reconciliation (Planned)
@@ -108,7 +108,7 @@ Plans:
 | 2. Kafka Consumer + Validation + DLQ | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete | 2026-03-24 |
 | 4. Spark Feature Engineering | v1.2 | 3/3 | Complete | 2026-03-25 |
-| 5. ML Risk Scoring Service | v1.3 | 1/3 | In Progress|  |
+| 5. ML Risk Scoring Service | v1.3 | 2/3 | In Progress|  |
 | 6. Financial Ledger | v1.4 | 0/TBD | Not started | - |
 | 7. Reconciliation + Airflow | v1.4 | 0/TBD | Not started | - |
 | 8. BigQuery + dbt | v2.0 | 0/TBD | Not started | - |
