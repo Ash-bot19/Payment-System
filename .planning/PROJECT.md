@@ -25,10 +25,14 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 - ✓ DLQ routing with full locked contract (SCHEMA_INVALID, original_topic/offset, retry_count, first_failure_ts, payload) — v1.1
 - ✓ Downstream publish to payment.transaction.validated with merchant_id propagation — v1.1
 - ✓ 8 integration tests covering state transitions, append-only enforcement, rate limit boundary, and Kafka E2E — v1.1
+- ✓ Spark Structured Streaming pipeline: 3 concurrent queries (velocity_1m, velocity_5m, enriched features), all 8 ML features written to Redis feat:{event_id} hash — v1.2 (Validated in Phase 04: spark-feature-engineering)
+- ✓ Welford online z-score algorithm for amount_zscore computation (cold-start safe, requires ≥3 observations) — v1.2
+- ✓ Spark Dockerfile (bitnami/spark:3.5) + docker-compose service with named checkpoint volume — v1.2
+- ✓ 37 tests: 23 unit (feature_functions + redis_sink) + 11 integration + 3 E2E (Redis) — v1.2
 
 ### Active
 
-- [ ] Spark Structured Streaming feature engineering (velocity, z-score, merchant risk)
+- [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
 - [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
 - [ ] Double-entry financial ledger (append-only, DB trigger enforces balanced entries)
 - [ ] Apache Airflow nightly reconciliation DAG
@@ -50,6 +54,9 @@ Python 3.11, Docker + Docker Compose for local dev, Windows 11 PowerShell enviro
 Stack: FastAPI 0.115+ · Kafka 3.7+ · Redis 7.2+ · Spark 3.5+ · XGBoost 2.0+ · PostgreSQL 16+ · Airflow 2.9+ · BigQuery · dbt 1.8+ · Streamlit 1.35+ · Prometheus + Grafana · GCP.
 v1.0 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
 v1.1 shipped 40 files changed, 5,258 insertions — 2 phases, 5 plans, 11 tasks. 8 integration tests + 11 unit tests all passing (pending human UAT on live Docker stack).
+v1.2 shipped Phase 04 complete — Spark feature engineering pipeline. 3 plans, 3 waves, 37 tests (23 unit + 11 integration + 3 E2E). All 8 ML features computed and written to Redis.
+
+Last updated: 2026-03-25
 
 ## Constraints
 
