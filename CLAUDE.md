@@ -133,12 +133,14 @@ M2: Validation Layer + State Machine — DONE 2026-03-24 (GSD milestone v1.1 arc
       - 03-02: ValidationConsumer wired with D-03 locked order; merchant_id added to ValidatedPaymentEvent; Docker Compose → PostgreSQL
       - 03-03: 8 integration tests (QUAL-01): happy path, schema failure, rate-limit block, append-only enforcement, Kafka E2E
   ⏳ Human UAT pending: run integration tests + verify Alembic migration against live Postgres (see 03-HUMAN-UAT.md)
-M3: Spark Feature Engineering — PLANNED 2026-03-24 (GSD milestone: v1.2 — Phase 4)
-  📋 Phase 4 fully planned — 3 plans, 3 waves, all FEAT-01–FEAT-12 covered
-      - 04-01: feature_functions.py (Welford zscore, pure transforms) + redis_sink.py (foreachBatch) + 16 unit tests
-      - 04-02: feature_engineering.py (SparkSession, startup validator, Kafka readStream, velocity windows → Redis, 3 writeStream queries)
-      - 04-03: spark/Dockerfile, docker-compose spark-feature-engine service (port 4040, named checkpoint volume), E2E integration test
-  📋 Next: /gsd:execute-phase 4 (after /clear)
+M3: Spark Feature Engineering — DONE 2026-03-25 (GSD milestone: v1.2 — Phase 4)
+  ✅ Phase 4: Spark Feature Engineering — DONE 2026-03-25
+      - 04-01: feature_functions.py (Welford zscore count<3, pure transforms) + redis_sink.py (foreachBatch, all 8 ML features, TTL 3600s) + 23 unit tests
+      - 04-02: feature_engineering.py (SparkSession, env validator, Kafka readStream, velocity windows → Redis, 3 concurrent writeStream queries) + 11 integration tests
+      - 04-03: spark/Dockerfile (bitnami/spark:3.5, Kafka JAR), docker-compose spark-feature-engine (port 4040, named spark_checkpoints volume) + 3 E2E tests
+  ✅ 37 tests total — 23 unit + 11 integration + 3 E2E (all pass, JVM-dependent skip gracefully)
+  ✅ Verification: 18/18 must-haves, all FEAT-01–FEAT-12 requirements covered
+  ⏳ Human UAT pending: docker-compose up spark-feature-engine + verify Redis features written live
 M4: ML Risk Scoring Service — TODO
 M5: Financial Ledger — TODO
 M6: Reconciliation + Airflow — TODO
