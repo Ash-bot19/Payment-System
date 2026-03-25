@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Spark + ML Scoring
 status: unknown
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-25T08:01:49.528Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-25T08:08:20.408Z"
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24 after v1.1 milestone complete)
 ## Current Position
 
 Phase: 04 (spark-feature-engineering) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Plan: 2 of 3
 | Phase 03-state-machine-rate-limiting-downstream-publish P02 | 15 | 2 tasks | 5 files |
 | Phase 03-state-machine-rate-limiting-downstream-publish P03 | 2 | 2 tasks | 2 files |
 | Phase 04-spark-feature-engineering P01 | 13 | 2 tasks | 8 files |
+| Phase 04 P02 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 04-spark-feature-engineering]: Welford count<3 threshold: need 2 prior observations for reliable variance; cold start and single-point both return 0.0
 - [Phase 04-spark-feature-engineering]: feature_functions.py uses pure Python types (not PySpark Columns) — runs inside foreachBatch on driver, not distributed executors
 - [Phase 04-spark-feature-engineering]: foreachBatch Redis pipeline requires explicit pipe.execute() — omitting causes silent zero writes with no error
+- [Phase 04]: PySpark column expressions (F.hour, F.dayofweek, F.log1p) used for streaming transforms — pure Python feature_functions.py used inside foreachBatch on driver only
+- [Phase 04]: requires_java skipif guard added to JVM-dependent Spark tests — prevents ERROR on machines without Java, tests run in bitnami/spark Docker container
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25T08:01:49.524Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-25T08:08:20.403Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
