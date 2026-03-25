@@ -193,6 +193,60 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # --- Scoring consumer (reads payment.transaction.validated, scores via XGBoost, publishes scored events) ---
+  scoring-consumer:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.scoring-consumer
+    container_name: scoring-consumer
+    ports:
+      - "8003:8003"
+    env_file:
+      - ../.env
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL_SYNC=postgresql://payment:payment@postgres:5432/payment_db
+      - ML_MODEL_PATH=ml/models/model.ubj
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # --- ML scoring FastAPI service (POST /score debug/test endpoint) ---
+  ml-scoring-service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.ml-service
+    container_name: ml-scoring-service
+    ports:
+      - "8001:8001"
+    env_file:
+      - ../.env
+    environment:
+      - ML_MODEL_PATH=ml/models/model.ubj
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   redis_data:
   postgres_data:

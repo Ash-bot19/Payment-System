@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Pre-trained model is included via COPY . .
+# (ml/models/model.ubj is committed to the repo)
+
+EXPOSE 8003
+
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 --start-period=10s \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"
+
+CMD ["python", "-m", "kafka.consumers.scoring_consumer"]
