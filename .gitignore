@@ -49,3 +49,5 @@ payment-backend/spark/checkpoints/
 payment-backend/ml/*.pkl
 payment-backend/ml/*.json
 payment-backend/ml/models/
+# Exception: committed pre-trained model (D-A1: model committed to repo, not a registry)
+!payment-backend/ml/models/model.ubj
