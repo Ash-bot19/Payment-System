@@ -32,11 +32,17 @@ class PaymentState(enum.Enum):
     INITIATED  — event first seen by validation consumer
     VALIDATED  — passed schema + business-rule validation
     FAILED     — rejected (schema error) or rate-limited
+    SCORING    — sent to ML scoring service (Phase 05)
+    AUTHORIZED — ML risk_score < 0.7 (Phase 05)
+    FLAGGED    — ML risk_score >= 0.7, routed to manual review (Phase 05)
     """
 
     INITIATED = "INITIATED"
     VALIDATED = "VALIDATED"
     FAILED = "FAILED"
+    SCORING = "SCORING"
+    AUTHORIZED = "AUTHORIZED"
+    FLAGGED = "FLAGGED"
 
 
 class PaymentStateLogEntry(Base):
