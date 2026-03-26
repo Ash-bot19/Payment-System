@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: ML Risk Scoring
 status: unknown
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-25T19:33:12.276Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-26T18:05:19.743Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25 after v1.2 milestone complete)
 ## Current Position
 
 Phase: 05 (ml-risk-scoring) — EXECUTING
-Plan: 3 of 3
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 3
 | Phase 04 P03 | 184 | 2 tasks | 4 files |
 | Phase 05-ml-risk-scoring P01 | 8 | 1 tasks | 8 files |
 | Phase 05 P02 | 387 | 2 tasks | 8 files |
+| Phase 05-ml-risk-scoring P03 | 45 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 05-ml-risk-scoring]: crash-and-exit (sys.exit(1)) for missing model at startup — distinguishes misconfiguration from runtime Redis-timeout fallback (D-A3)
 - [Phase 05]: FastAPI lifespan over @app.on_event for ml_service model load — on_event deprecated in FastAPI 0.115+
 - [Phase 05]: model.ubj lives at ml/models/model.ubj (not ml/model.ubj) — confirmed on filesystem during Phase 05-02 test run
+- [Phase 05-ml-risk-scoring]: ML scoring pipeline containerized: scoring-consumer (8003) + ml-scoring-service (8001) via docker-compose with health checks; ML_MODEL_PATH=ml/models/model.ubj; health checks via Python urllib.request (no curl dep)
 
 ### Pending Todos
 
@@ -102,6 +104,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-25T19:33:12.269Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-26T18:05:19.738Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
