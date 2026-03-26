@@ -42,7 +42,12 @@ def _get_redis_client():
 
     url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
-        client = redis_lib.Redis.from_url(url, socket_connect_timeout=1, socket_timeout=1)
+        client = redis_lib.Redis.from_url(
+            url,
+            decode_responses=True,
+            socket_connect_timeout=1,
+            socket_timeout=1,
+        )
         client.ping()
         return client
     except Exception:
