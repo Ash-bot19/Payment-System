@@ -33,7 +33,7 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 
 ### Active
 
-- [ ] XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout)
+- ✓ XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout) — v1.3
 - [ ] Double-entry financial ledger (append-only, DB trigger enforces balanced entries)
 - [ ] Apache Airflow nightly reconciliation DAG
 - [ ] BigQuery + dbt transformation layer
@@ -55,8 +55,9 @@ Stack: FastAPI 0.115+ · Kafka 3.7+ · Redis 7.2+ · Spark 3.5+ · XGBoost 2.0+ 
 v1.0 shipped 376 Python LOC + 158 YAML LOC (534 total). All 5 unit tests pass.
 v1.1 shipped 40 files changed, 5,258 insertions — 2 phases, 5 plans, 11 tasks. 8 integration tests + 11 unit tests all passing (pending human UAT on live Docker stack).
 v1.2 shipped Phase 04 complete — Spark feature engineering pipeline. 3 plans, 6 tasks, 37 tests (23 unit + 11 integration + 3 E2E). All 8 ML features computed and written to Redis. Human UAT passed 2026-03-25.
+v1.3 shipped Phase 05 complete — ML risk scoring pipeline. 3 plans, 30 files changed, ~4,076 insertions. XGBoostScorer + ScoringConsumer + FastAPI ml_service, 47 tests (13 + 34 unit + 4 E2E). Both containers healthy, POST /score confirmed. Human UAT passed 2026-03-26.
 
-Last updated: 2026-03-25
+Last updated: 2026-03-26
 
 ## Constraints
 
@@ -82,6 +83,10 @@ Last updated: 2026-03-25
 | Prometheus instrumented from M1 | Zero retroactive cost; every future milestone gets metrics free | ✓ Good |
 | `cub zk-ready` for Zookeeper health check | `nc` (netcat) not available in Confluent images | ✓ Good |
 | FastAPI lifespan over `@app.on_event` | `on_event` deprecated in FastAPI 0.115+ | ✓ Good |
+| `model.ubj` committed to repo (not registry) | Zero runtime dependency on training infra; 38KB negligible in git; always regenerable from `train.py` | ✓ Good |
+| `sys.exit(1)` on missing model at startup | Missing model = misconfiguration, not a runtime error; distinguishes from Redis-timeout fallback path | ✓ Good |
+| Redis timeout → `FEATURE_DEFAULTS` fallback (not DLQ) | Redis miss is transient (Spark lag, cold start); DLQ reserved for unrecoverable failures; `manual_review=True` is the safe default | ✓ Good |
+| DB write before Kafka publish in ScoringConsumer | Downstream consumers see state in DB before receiving scored event — prevents race conditions | ✓ Good |
 | Pydantic v2 model contracts in `models/` | No inline schemas in routes; v2 `model_validator` not `validator` | ✓ Good |
 | SQLAlchemy Core `insert()` for state machine writes | Explicit append-only semantics; no ORM session complexity | ✓ Good |
 | DB-level PL/pgSQL trigger on payment_state_log | Physically immutable audit log even if application-layer guard fails | ✓ Good |
@@ -96,15 +101,14 @@ Last updated: 2026-03-25
 | foreachBatch + redis-py pipeline vs mapGroupsWithState | foreachBatch runs on driver with full redis-py access; mapGroupsWithState requires Spark-serializable state — unnecessary complexity | ✓ Good |
 | ENV PYTHONPATH=/app in Dockerfile | spark-submit doesn't add CWD to sys.path; Dockerfile-level fix cleaner than patching application code | ✓ Good |
 
-## Current Milestone: v1.3 ML Risk Scoring
+## Current Milestone: v1.4 Ledger + Reconciliation
 
-**Goal:** Score transactions with XGBoost (p99 < 100ms SLA) by reading the 8 ML features from Redis, running inference, and publishing scored events downstream.
+**Goal:** Persist every settled transaction as balanced double-entry ledger entries and run nightly Airflow reconciliation against Stripe.
 
 **Target features:**
-- FastAPI ML scoring service consuming `payment.transaction.validated`
-- Read `feat:{event_id}` + `velocity:1m/5m:` keys from Redis to assemble feature vector
-- XGBoost inference (p99 < 100ms, Redis fallback → manual_review=true on timeout)
-- Publish to `payment.transaction.scored` and `payment.alert.triggered`
+- Consume `payment.transaction.scored` (AUTHORIZED events), publish to `payment.ledger.entry`
+- Write exactly 2 ledger entries (1 DEBIT + 1 CREDIT) per SETTLED transaction; DB trigger enforces `SUM(amount_cents) = 0`
+- Nightly Airflow DAG reconciling internal ledger against Stripe API; feed `payment.reconciliation.queue`
 
 ## Evolution
 

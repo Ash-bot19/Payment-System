@@ -147,6 +147,53 @@
 
 ---
 
+## Milestone: v1.3 — ML Risk Scoring
+
+**Shipped:** 2026-03-26
+**Phases:** 1 (Phase 5) | **Plans:** 3 | **Files changed:** 30 | **Insertions:** ~4,076
+
+### What Was Built
+
+- `XGBoostScorer`: load-once constructor with `sys.exit(1)` on missing model; `score(dict) → RiskScore` with [0,1] clamping; `FEATURE_DEFAULTS` conservative values that score as `manual_review=True`
+- `ScoringConsumer`: full Kafka poll loop — Redis `hgetall feat:{event_id}` with 3×50ms retry + 20ms timeout fallback, XGBoost inference, SCORING→AUTHORIZED/FLAGGED state writes (DB before publish), dual-topic Kafka publish, idempotency guard
+- `FastAPI ml_service`: POST /score debug endpoint on port 8001, lifespan model load, Prometheus metrics
+- `Dockerfile.scoring-consumer` + `Dockerfile.ml-service`: python:3.11-slim, health checks via Python urllib.request, docker-compose with `service_healthy` depends_on
+- 47 tests: 13 unit (scorer) + 34 unit (consumer + ml_service) + 4 E2E — all passing; human UAT confirmed POST /score returns valid risk scores
+
+### What Worked
+
+- **Crash-on-missing-model discipline**: Using `sys.exit(1)` for startup misconfiguration (missing model file) vs. silent fallback for runtime conditions (Redis timeout) is a clean distinction. Made debugging configuration errors instant rather than silent.
+- **DB-write-before-Kafka ordering**: Enforcing state persistence before downstream publish prevented a class of race conditions where consumers could receive scored events while the state row hadn't been committed yet. Worth the added complexity.
+- **Conservative `FEATURE_DEFAULTS` as safety net**: The belt-and-suspenders `manual_review=True` override on any feature-miss path means incomplete feature assembly can never result in an under-flagged transaction. False positives (human reviews) are acceptable; false negatives are not.
+- **load-once model pattern**: Loading `model.ubj` once in the constructor and keeping `self._booster` in memory — no per-request model load, no thread safety issues, simple to test.
+
+### What Was Inefficient
+
+- **Plan had wrong model path (`ml/model.ubj` vs `ml/models/model.ubj`)**: `train.py` creates a `models/` subdirectory, but plan examples referenced the parent path. All test files needed path corrections. Should verify output file paths after Plan 01 executes before wiring into Plan 02.
+- **`@app.on_event` in plan code snippet**: Plan 02 snippets used the deprecated FastAPI `on_event` pattern. Even though CLAUDE.md documents the correct `lifespan` pattern, the plan wasn't checked against it. Plan code snippets should be validated against CLAUDE.md conventions before execution.
+- **`decode_responses=True` missing from E2E test client**: The production `ScoringConsumer` had this correctly set, but the E2E test spun up a fresh Redis client without it. Test clients should mirror production client configuration by default.
+
+### Patterns Established
+
+- **`FEATURE_ORDER` list as canonical feature index**: Separate from `FEATURE_DEFAULTS` — `FEATURE_ORDER` is the single source of truth for the DMatrix feature index. Both train.py and scorer.py must use it.
+- **Python `urllib.request` for Docker health checks**: Zero extra dependency in `python:3.11-slim`; avoids adding `curl`. Pattern: `CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:{PORT}/health')"`.
+- **Test uses production model, not fixture model**: For threshold tests (is `manual_review` triggered at 0.85?), test fixture models with fewer training rounds may not be calibrated correctly. Use the committed production model for these tests.
+- **Prometheus Counter re-registration in tests**: Multiple test instantiations of the same FastAPI app will try to register the same Counter name, crashing the second test. Append a timestamp suffix or use `CollectorRegistry(auto_describe=True)` per test.
+
+### Key Lessons
+
+1. A missing model at startup is a deployment error, not a runtime error. Do not handle it with the same fallback as a transient Redis miss — crash loudly so ops can fix the config.
+2. Test clients that interact with external services (Redis, Kafka) should always be constructed identically to production clients. `decode_responses`, timeout settings, and SSL config are easy to miss.
+3. Plan code snippets are aspirational, not authoritative. File paths, API patterns, and import paths should be verified against the actual codebase after prior plans execute.
+4. Conservative fallback defaults are a security property: when in doubt (features unavailable), escalate to human review. Never take the "optimistic" path on missing data in fraud detection.
+
+### Cost Observations
+
+- Sessions: 1
+- Notable: All 3 Phase 5 plans executed sequentially (05-01 → 05-02 → 05-03) due to hard dependency chain. The model.ubj gitignore bug was the only non-code issue; all 5 bugs were caught before human UAT and fixed inline.
+
+---
+
 ## Cross-Milestone Trends
 
 | Milestone | Phases | LOC Added | Sessions | Bugs Found |
@@ -154,3 +201,4 @@
 | v1.0 Foundation + Ingestion | 1 | ~534 | 1 | 5 |
 | v1.1 Validation + State Machine | 2 | ~5,258 | 2 | 2 (CLAUDE.md pointer, DATABASE_URL_SYNC) |
 | v1.2 Spark Feature Engineering | 1 | ~504 (Phase 4 code) | 1 | 5 (bitnami removed, openjdk-17 gone, PYTHONPATH, field name mismatch, None guards) |
+| v1.3 ML Risk Scoring | 1 | ~4,076 | 1 | 5 (.gitignore model block, wrong model path, deprecated on_event, decode_responses, WSL2 OOM) |

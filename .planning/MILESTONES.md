@@ -1,5 +1,17 @@
 # Milestones
 
+## v1.3 ML Risk Scoring (Shipped: 2026-03-26)
+
+**Phases completed:** 1 phase, 3 plans | **Files changed:** 30 | **Insertions:** ~4,076
+
+**Key accomplishments:**
+
+- XGBoostScorer (load-once, crash-on-missing), FeatureVector/RiskScore/ScoredPaymentEvent Pydantic v2 models, synthetic `train.py`, `model.ubj` (38KB, AUC=1.0) committed to repo — 13 unit tests green
+- ScoringConsumer Kafka poll loop: Redis `hgetall feat:{event_id}` with 3×50ms retry + 20ms timeout fallback, XGBoost inference, SCORING→AUTHORIZED/FLAGGED state writes (DB before Kafka publish), dual-topic publish, idempotency guard — 34 unit tests green
+- XGBoost scoring pipeline fully containerised and UAT-verified: scoring-consumer (port 8003) + ml-scoring-service (port 8001) via docker-compose; POST /score confirmed returning `risk_score=0.00336`; all 47 tests passing
+
+---
+
 ## v1.2 Spark Feature Engineering (Shipped: 2026-03-25)
 
 **Phases completed:** 1 phases, 3 plans, 6 tasks

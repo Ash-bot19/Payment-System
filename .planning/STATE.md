@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: ML Risk Scoring
-status: unknown
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-03-26T18:11:22.295Z"
+milestone: v1.4
+milestone_name: Ledger + Reconciliation
+status: planning
+stopped_at: v1.3 milestone archived 2026-03-27
+last_updated: "2026-03-27T00:00:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 1
@@ -16,10 +16,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-25 after v1.2 milestone complete)
+See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 05 — ml-risk-scoring
+**Current focus:** v1.4 — Ledger + Reconciliation (planning)
 
 ## Current Position
 
