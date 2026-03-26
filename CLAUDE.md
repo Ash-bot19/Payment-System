@@ -132,16 +132,22 @@ M2: Validation Layer + State Machine — DONE 2026-03-24 (GSD milestone v1.1 arc
       - 03-01: Alembic setup + payment_state_log migration (append-only DB trigger), PaymentStateMachine, MerchantRateLimiter, ValidatedEventProducer
       - 03-02: ValidationConsumer wired with D-03 locked order; merchant_id added to ValidatedPaymentEvent; Docker Compose → PostgreSQL
       - 03-03: 8 integration tests (QUAL-01): happy path, schema failure, rate-limit block, append-only enforcement, Kafka E2E
-  ⏳ Human UAT pending: run integration tests + verify Alembic migration against live Postgres (see 03-HUMAN-UAT.md)
+  ✅ Human UAT passed 2026-03-25: 8/8 integration tests passed, Alembic migration 001 applied, no_update_state_log + no_delete_state_log triggers verified in pg_trigger
 M3: Spark Feature Engineering — DONE 2026-03-25 (GSD milestone: v1.2 — Phase 4)
   ✅ Phase 4: Spark Feature Engineering — DONE 2026-03-25
       - 04-01: feature_functions.py (Welford zscore count<3, pure transforms) + redis_sink.py (foreachBatch, all 8 ML features, TTL 3600s) + 23 unit tests
       - 04-02: feature_engineering.py (SparkSession, env validator, Kafka readStream, velocity windows → Redis, 3 concurrent writeStream queries) + 11 integration tests
-      - 04-03: spark/Dockerfile (bitnami/spark:3.5, Kafka JAR), docker-compose spark-feature-engine (port 4040, named spark_checkpoints volume) + 3 E2E tests
+      - 04-03: spark/Dockerfile (python:3.11-slim + openjdk-21 + pyspark pip, Kafka JAR), docker-compose spark-feature-engine (port 4040, named spark_checkpoints volume) + 3 E2E tests
   ✅ 37 tests total — 23 unit + 11 integration + 3 E2E (all pass, JVM-dependent skip gracefully)
   ✅ Verification: 18/18 must-haves, all FEAT-01–FEAT-12 requirements covered
-  ⏳ Human UAT pending: docker-compose up spark-feature-engine + verify Redis features written live
-M4: ML Risk Scoring Service — TODO
+  ✅ Human UAT passed 2026-03-25: docker-compose build+run OK, all 8 feat:* Redis keys verified live (hour_of_day=10, amount_cents_log=8.517, merchant_risk_score=0.5 default)
+M4: ML Risk Scoring Service — DONE 2026-03-26 (GSD milestone: v1.3 — Phase 5)
+  ✅ Phase 5: ML Risk Scoring — DONE 2026-03-26
+      - 05-01: XGBoostScorer + FeatureVector/RiskScore/ScoredPaymentEvent models + train.py + model.ubj (38KB) + 13 unit tests
+      - 05-02: ScoringConsumer (Redis 3×50ms retry, fallback, state writes, Kafka publish) + AlertProducer + ScoredEventProducer + FastAPI POST /score + 34 unit tests
+      - 05-03: Dockerfile.scoring-consumer (port 8003) + Dockerfile.ml-service (port 8001) + docker-compose.yml updated + 4 E2E tests
+  ✅ 47 tests total — 13 unit (05-01) + 34 unit (05-02) + 4 E2E (05-03, skip if services not running)
+  ✅ Human UAT passed 2026-03-26: both containers healthy, POST /score returned risk_score=0.00336, scoring-consumer logs xgboost_model_loaded, all unit tests 100% pass
 M5: Financial Ledger — TODO
 M6: Reconciliation + Airflow — TODO
 M7: BigQuery + dbt — TODO
@@ -162,7 +168,13 @@ Zookeeper health check: use `cub zk-ready localhost:2181 30` — nc (netcat) is 
 Stripe SDK v9+: exception is stripe.error.SignatureVerificationError (singular), not stripe.errors (plural)
 Docker container name conflicts on re-run: always `docker rm -f <names>` before `docker-compose up -d` if containers exist from a previous failed run
 requirements.txt got overwritten by a linter with docker-compose content — always verify after any tool writes to it
+bitnami/spark:3.5 removed from Docker Hub — use python:3.11-slim + openjdk-21-jre-headless + pyspark via pip instead
+openjdk-17-jre-headless removed from Debian trixie — use openjdk-21-jre-headless (PySpark 3.5 is Java 21 compatible)
+Spark foreachBatch: always guard Redis hash values against None before pipe.hset() — Spark columns null-propagate silently
+UAT test messages must match Spark schema field names exactly: stripe_customer_id (not customer_id), received_at (not created_at)
 Repo must be git-initialized before architecture review step (git diff) — run `git init && git add . && git commit` at end of first session
+WSL2 memory limit not set by default — full stack (11 containers including Spark + Kafka JVMs) needs ~6GB RAM; set memory=8GB in C:\Users\ASUS\.wslconfig before first docker-compose up or Docker Engine will hang
+Always start infra containers first (zookeeper kafka redis postgres), then build app services — avoids OOM spikes from parallel image pulls + builds
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget
