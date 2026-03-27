@@ -58,7 +58,11 @@ See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 
 **Goal**: Consume `payment.ledger.entry`, write balanced double-entry ledger entries to PostgreSQL (append-only, DB trigger enforces SUM=0 per transaction_id), update state to SETTLED/FLAGGED.
 **Depends on**: Phase 5
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Models, migrations, LedgerEntryProducer, ManualReviewRepository, scoring consumer wiring
+- [ ] 06-02-PLAN.md — Ledger consumer, Docker containerization, E2E tests
 
 #### Phase 7: Reconciliation + Airflow
 
@@ -103,7 +107,7 @@ See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete | 2026-03-24 |
 | 4. Spark Feature Engineering | v1.2 | 3/3 | Complete | 2026-03-25 |
 | 5. ML Risk Scoring Service | v1.3 | 3/3 | Complete   | 2026-03-26 |
-| 6. Financial Ledger | v1.4 | 0/TBD | Not started | - |
+| 6. Financial Ledger | v1.4 | 0/2 | Planning | - |
 | 7. Reconciliation + Airflow | v1.4 | 0/TBD | Not started | - |
 | 8. BigQuery + dbt | v2.0 | 0/TBD | Not started | - |
 | 9. Dashboard + Monitoring | v2.0 | 0/TBD | Not started | - |
