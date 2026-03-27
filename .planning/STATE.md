@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-27T06:12:48.477Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-27T18:41:12.676Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 06 — financial-ledger
+**Current focus:** Phase 07 — reconciliation-airflow
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
+Phase: 07 (reconciliation-airflow) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: Not started
 | Phase 05-ml-risk-scoring P03 | 45 | 2 tasks | 4 files |
 | Phase 06-financial-ledger P01 | 7 | 2 tasks | 11 files |
 | Phase 06-financial-ledger P02 | 5 | 2 tasks | 5 files |
+| Phase 07-reconciliation-airflow P01 | 12 | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 06-financial-ledger]: ManualReviewRepository uses SQLAlchemy Core insert() with engine.begin() for explicit append-only semantics
 - [Phase 06-financial-ledger]: OperationalError (DB down) is re-raised (crash) not routed to DLQ — systemic failures use Docker restart + Kafka replay per D-08, D-10
 - [Phase 06-financial-ledger]: Idempotency guard checks payment_state_log for existing SETTLED row — prevents duplicate DEBIT+CREDIT writes on message replay
+- [Phase 07-01]: Use Literal type for discrepancy_type (not Python enum) — .model_dump() serializes to plain string, zero special-casing for Kafka JSON
+- [Phase 07-01]: All 10 D-11 fields on every ReconciliationMessage with Optional=None for inapplicable fields — consistent shape for downstream consumers
+- [Phase 07-01]: publish_batch() iterates sequentially and calls publish() per message — fail-fast on first KafkaException, no partial batch commits
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T06:05:57.086Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-27T18:41:12.665Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
