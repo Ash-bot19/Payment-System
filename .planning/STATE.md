@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-27T05:58:22.933Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-27T06:05:57.089Z"
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -50,6 +50,7 @@ Plan: 2 of 2
 | Phase 05 P02 | 387 | 2 tasks | 8 files |
 | Phase 05-ml-risk-scoring P03 | 45 | 2 tasks | 4 files |
 | Phase 06-financial-ledger P01 | 7 | 2 tasks | 11 files |
+| Phase 06-financial-ledger P02 | 5 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 06-financial-ledger]: DEFERRABLE INITIALLY DEFERRED balance trigger in ledger_entries — allows DEBIT+CREDIT to be inserted in one transaction before SUM=0 is checked at commit
 - [Phase 06-financial-ledger]: LedgerEntryProducer mirrors AlertProducer (retry+backoff+crash-on-exhaustion) for consistency across all Kafka producers
 - [Phase 06-financial-ledger]: ManualReviewRepository uses SQLAlchemy Core insert() with engine.begin() for explicit append-only semantics
+- [Phase 06-financial-ledger]: OperationalError (DB down) is re-raised (crash) not routed to DLQ — systemic failures use Docker restart + Kafka replay per D-08, D-10
+- [Phase 06-financial-ledger]: Idempotency guard checks payment_state_log for existing SETTLED row — prevents duplicate DEBIT+CREDIT writes on message replay
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T05:58:22.929Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-27T06:05:57.086Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
