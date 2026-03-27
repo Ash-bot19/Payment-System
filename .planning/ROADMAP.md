@@ -61,7 +61,7 @@ See `.planning/milestones/v1.3-ROADMAP.md` for full phase details.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Models, migrations, LedgerEntryProducer, ManualReviewRepository, scoring consumer wiring
+- [x] 06-01-PLAN.md — Models, migrations, LedgerEntryProducer, ManualReviewRepository, scoring consumer wiring
 - [ ] 06-02-PLAN.md — Ledger consumer, Docker containerization, E2E tests
 
 #### Phase 7: Reconciliation + Airflow
