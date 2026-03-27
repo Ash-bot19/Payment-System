@@ -247,6 +247,33 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # --- Ledger consumer (reads payment.ledger.entry, writes DEBIT+CREDIT, transitions to SETTLED) ---
+  ledger-consumer:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.ledger-consumer
+    container_name: ledger-consumer
+    ports:
+      - "8004:8004"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - DATABASE_URL_SYNC=postgresql://payment:payment@postgres:5432/payment_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
 volumes:
   redis_data:
   postgres_data:
