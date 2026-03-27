@@ -35,7 +35,7 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 
 - ✓ XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout) — v1.3
 - ✓ Double-entry financial ledger (append-only, DB trigger enforces balanced entries) — v1.4 — Validated in Phase 06: Financial Ledger
-- [ ] Apache Airflow nightly reconciliation DAG
+- ✓ Apache Airflow nightly reconciliation DAG (detect_duplicates, fetch_stripe_window, compare_and_publish) — v1.5 — Validated in Phase 07: Reconciliation + Airflow
 - [ ] BigQuery + dbt transformation layer
 - [ ] Streamlit observability dashboard
 - [ ] GCP deployment (Cloud Run, Cloud SQL, Cloud Memorystore)
@@ -57,8 +57,9 @@ v1.1 shipped 40 files changed, 5,258 insertions — 2 phases, 5 plans, 11 tasks.
 v1.2 shipped Phase 04 complete — Spark feature engineering pipeline. 3 plans, 6 tasks, 37 tests (23 unit + 11 integration + 3 E2E). All 8 ML features computed and written to Redis. Human UAT passed 2026-03-25.
 v1.3 shipped Phase 05 complete — ML risk scoring pipeline. 3 plans, 30 files changed, ~4,076 insertions. XGBoostScorer + ScoringConsumer + FastAPI ml_service, 47 tests (13 + 34 unit + 4 E2E). Both containers healthy, POST /score confirmed. Human UAT passed 2026-03-26.
 v1.4 shipped Phase 06 complete — Financial ledger. 2 plans, LedgerEntry + ManualReviewQueueEntry ORM models, Alembic migrations 002+003 (append-only + DEFERRABLE balance triggers), LedgerEntryProducer, ManualReviewRepository, ScoringConsumer wired for downstream routing, LedgerConsumer (DEBIT+CREDIT double-entry, SETTLED state transition, DLQ error handling), Dockerfile.ledger-consumer on port 8004. 128 unit tests passing. Human UAT pending live Docker stack (2026-03-27).
+v1.5 shipped Phase 07 complete — Reconciliation + Airflow. 3 plans, ReconciliationMessage model (D-11, 10 fields), ReconciliationProducer (backoff [1,2,4], publish_batch), nightly_reconciliation Airflow DAG (TaskFlow, @daily, detect_duplicates + fetch_stripe_window parallel → compare_and_publish), Airflow Docker services in docker-compose. 167 unit tests passing. Integration tests deferred (skip gracefully, run against live stack).
 
-Last updated: 2026-03-27
+Last updated: 2026-03-28
 
 ## Constraints
 
