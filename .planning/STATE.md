@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-27T18:41:12.676Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-27T18:50:19.602Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 ## Current Position
 
 Phase: 07 (reconciliation-airflow) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: 2 of 3
 | Phase 06-financial-ledger P01 | 7 | 2 tasks | 11 files |
 | Phase 06-financial-ledger P02 | 5 | 2 tasks | 5 files |
 | Phase 07-reconciliation-airflow P01 | 12 | 1 tasks | 4 files |
+| Phase 07-reconciliation-airflow P02 | 7 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 07-01]: Use Literal type for discrepancy_type (not Python enum) — .model_dump() serializes to plain string, zero special-casing for Kafka JSON
 - [Phase 07-01]: All 10 D-11 fields on every ReconciliationMessage with Optional=None for inapplicable fields — consistent shape for downstream consumers
 - [Phase 07-01]: publish_batch() iterates sequentially and calls publish() per message — fail-fast on first KafkaException, no partial batch commits
+- [Phase 07-02]: Module-level @task functions (not nested inside @dag) — makes tasks directly callable in unit tests without Airflow context
+- [Phase 07-02]: _InDagContext flag in test stub: @task wrappers return MagicMock sentinel inside @dag body, run real logic when called directly in tests
+- [Phase 07-02]: AMOUNT_MISMATCH sets stripe_amount_cents=None per D-11 — diff_cents = stripe - internal captures the discrepancy
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T18:41:12.665Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-27T18:50:19.592Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
