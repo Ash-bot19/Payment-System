@@ -148,7 +148,13 @@ M4: ML Risk Scoring Service — DONE 2026-03-26 (GSD milestone: v1.3 — Phase 5
       - 05-03: Dockerfile.scoring-consumer (port 8003) + Dockerfile.ml-service (port 8001) + docker-compose.yml updated + 4 E2E tests
   ✅ 47 tests total — 13 unit (05-01) + 34 unit (05-02) + 4 E2E (05-03, skip if services not running)
   ✅ Human UAT passed 2026-03-26: both containers healthy, POST /score returned risk_score=0.00336, scoring-consumer logs xgboost_model_loaded, all unit tests 100% pass
-M5: Financial Ledger — TODO
+M5: Financial Ledger — DONE 2026-03-27 (GSD milestone: v1.4 — Phase 6)
+  ✅ Phase 6: Financial Ledger — DONE 2026-03-27
+      - 06-01: LedgerEntry + ManualReviewQueueEntry ORM models + Alembic migrations 002 (manual_review_queue, append-only) + 003 (ledger_entries, append-only + DEFERRABLE balance trigger) + LedgerEntryProducer + ManualReviewRepository + ScoringConsumer wired (AUTHORIZED → ledger, FLAGGED+manual_review → queue) + 43 unit tests
+      - 06-02: LedgerConsumer (reads payment.ledger.entry, writes 1 DEBIT + 1 CREDIT in single DB tx, AUTHORIZED→SETTLED state transition, DLQ on constraint violations, crash-on-OperationalError) + Dockerfile.ledger-consumer (port 8004) + docker-compose.yml updated + 12 unit + 4 E2E tests
+  ✅ 128 unit tests total (all passing)
+  ✅ Human UAT passed 2026-03-27: migrations 002+003 applied, all 3 DB triggers verified, balanced insert succeeded, single DEBIT correctly rejected, container healthy, 6 ledger rows written, SETTLED state transitions confirmed
+  ✅ Bug fixed: LedgerConsumer missing enable.auto.offset.store=false — store_offsets() requires it (commit a875500)
 M6: Reconciliation + Airflow — TODO
 M7: BigQuery + dbt — TODO
 M8: Dashboard + Monitoring — TODO
@@ -175,6 +181,9 @@ UAT test messages must match Spark schema field names exactly: stripe_customer_i
 Repo must be git-initialized before architecture review step (git diff) — run `git init && git add . && git commit` at end of first session
 WSL2 memory limit not set by default — full stack (11 containers including Spark + Kafka JVMs) needs ~6GB RAM; set memory=8GB in C:\Users\ASUS\.wslconfig before first docker-compose up or Docker Engine will hang
 Always start infra containers first (zookeeper kafka redis postgres), then build app services — avoids OOM spikes from parallel image pulls + builds
+Kafka consumer using store_offsets() requires enable.auto.offset.store=False in Consumer config — missing it causes KafkaError{code=_INVALID_ARG} at every offset commit
+Alembic must be run from payment-backend/ root with PYTHONPATH set: `PYTHONPATH="..." alembic -c db/alembic.ini upgrade head` — running from db/ dir fails with ModuleNotFoundError on models/
+Ledger balance trigger uses accounting formula: SUM(CREDIT amounts) - SUM(DEBIT amounts) = 0 (both amounts_cents are always positive per CLAUDE.md — do NOT use negative values for CREDIT rows)
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget
