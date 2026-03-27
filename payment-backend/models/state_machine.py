@@ -1,8 +1,10 @@
-"""SQLAlchemy models and enums for payment state machine — Phase 03.
+"""SQLAlchemy models and enums for payment state machine — Phase 03 / Phase 06.
 
 PaymentState: Python enum for state transitions (append-only log).
 PaymentStateLogEntry: SQLAlchemy ORM model for payment_state_log table.
 ProcessingResult: dataclass returned by PaymentStateMachine.process().
+
+Phase 06 additions: SETTLED and MANUAL_REVIEW states for ledger + review queue routing.
 """
 
 import enum
@@ -29,12 +31,14 @@ class Base(DeclarativeBase):
 class PaymentState(enum.Enum):
     """Payment state transitions per LOCKED state machine contract.
 
-    INITIATED  — event first seen by validation consumer
-    VALIDATED  — passed schema + business-rule validation
-    FAILED     — rejected (schema error) or rate-limited
-    SCORING    — sent to ML scoring service (Phase 05)
-    AUTHORIZED — ML risk_score < 0.7 (Phase 05)
-    FLAGGED    — ML risk_score >= 0.7, routed to manual review (Phase 05)
+    INITIATED      — event first seen by validation consumer
+    VALIDATED      — passed schema + business-rule validation
+    FAILED         — rejected (schema error) or rate-limited
+    SCORING        — sent to ML scoring service (Phase 05)
+    AUTHORIZED     — ML risk_score < 0.7 (Phase 05)
+    FLAGGED        — ML risk_score >= 0.7, routed to manual review (Phase 05)
+    SETTLED        — AUTHORIZED event written to double-entry ledger (Phase 06)
+    MANUAL_REVIEW  — FLAGGED event with manual_review=True queued for human review (Phase 06)
     """
 
     INITIATED = "INITIATED"
@@ -43,6 +47,8 @@ class PaymentState(enum.Enum):
     SCORING = "SCORING"
     AUTHORIZED = "AUTHORIZED"
     FLAGGED = "FLAGGED"
+    SETTLED = "SETTLED"
+    MANUAL_REVIEW = "MANUAL_REVIEW"
 
 
 class PaymentStateLogEntry(Base):
