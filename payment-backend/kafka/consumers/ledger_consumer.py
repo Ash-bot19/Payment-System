@@ -95,6 +95,7 @@ class LedgerConsumer:
             "bootstrap.servers": bootstrap_servers,
             "group.id": CONSUMER_GROUP,
             "enable.auto.commit": False,
+            "enable.auto.offset.store": False,
             "auto.offset.reset": "earliest",
         })
 
