@@ -68,7 +68,12 @@ Plans:
 
 **Goal**: Airflow DAG reconciling internal ledger against Stripe API nightly, feeding `payment.reconciliation.queue`, surfacing discrepancies.
 **Depends on**: Phase 6
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — ReconciliationMessage Pydantic model + ReconciliationProducer + unit tests
+- [ ] 07-02-PLAN.md — nightly_reconciliation Airflow DAG (detect_duplicates, fetch_stripe_window, compare_and_publish) + unit tests
+- [ ] 07-03-PLAN.md — Airflow in docker-compose, .env.example updates, integration + E2E tests
 
 ### v2.0 Analytics + Deploy (Planned)
 
@@ -107,8 +112,8 @@ Plans:
 | 3. State Machine + Rate Limiting + Downstream Publish | v1.1 | 3/3 | Complete | 2026-03-24 |
 | 4. Spark Feature Engineering | v1.2 | 3/3 | Complete | 2026-03-25 |
 | 5. ML Risk Scoring Service | v1.3 | 3/3 | Complete   | 2026-03-26 |
-| 6. Financial Ledger | v1.4 | 0/2 | Planning | - |
-| 7. Reconciliation + Airflow | v1.4 | 0/TBD | Not started | - |
+| 6. Financial Ledger | v1.4 | 2/2 | Complete | 2026-03-27 |
+| 7. Reconciliation + Airflow | v1.4 | 0/3 | Planning | - |
 | 8. BigQuery + dbt | v2.0 | 0/TBD | Not started | - |
 | 9. Dashboard + Monitoring | v2.0 | 0/TBD | Not started | - |
 | 10. Feature Replay Engine | v2.0 | 0/TBD | Not started | - |
