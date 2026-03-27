@@ -1,10 +1,10 @@
-"""Kafka consumer for payment.transaction.validated — Phase 05.
+"""Kafka consumer for payment.transaction.validated — Phase 05 / Phase 06.
 
 Reads validated payment events, assembles ML feature vectors from Redis,
 runs XGBoost inference, writes state transitions to payment_state_log,
 and publishes scored events downstream.
 
-Processing order (per D-D3, D-D4):
+Processing order (per D-D3, D-D4, D-02, D-04, D-05):
   1. Decode JSON, deserialize as ValidatedPaymentEvent.
   2. Bind structlog context.
   3. Idempotency guard — skip if SCORING row already exists for event_id.
@@ -17,6 +17,8 @@ Processing order (per D-D3, D-D4):
   10. Build ScoredPaymentEvent.
   11. Publish to payment.transaction.scored.
   12. If is_high_risk: also publish to payment.alert.triggered.
+  12a. If AUTHORIZED: publish to payment.ledger.entry via LedgerEntryProducer (per D-02, D-04).
+  12b. If FLAGGED + manual_review=True: insert into manual_review_queue (per D-05).
   13. Increment Prometheus counters.
   14. Commit Kafka offset (manual only — never auto-commit).
 
@@ -40,7 +42,9 @@ from prometheus_client import Counter
 from sqlalchemy import create_engine, text
 
 from kafka.producers.alert_producer import AlertProducer
+from kafka.producers.ledger_entry_producer import LedgerEntryProducer
 from kafka.producers.scored_event_producer import ScoredEventProducer
+from services.manual_review_repository import ManualReviewRepository
 from ml.scorer import FEATURE_DEFAULTS, XGBoostScorer
 from models.ml_scoring import ScoredPaymentEvent
 from models.state_machine import PaymentState
@@ -108,7 +112,7 @@ class ScoringConsumer:
         })
 
         # XGBoost scorer — crash-and-exit if model missing (per D-A3)
-        model_path = os.getenv("ML_MODEL_PATH", "ml/models/model.ubj")
+        model_path = os.getenv("ML_MODEL_PATH", "ml/models/model.ubj")  # per CLAUDE.md default
         self._scorer = XGBoostScorer(model_path)
 
         # Redis client with 20ms socket timeout per CLAUDE.md ML contract
@@ -128,6 +132,12 @@ class ScoringConsumer:
         self._scored_producer = ScoredEventProducer(bootstrap_servers)
         self._alert_producer = AlertProducer(bootstrap_servers)
 
+        # Ledger entry producer — publishes AUTHORIZED events to payment.ledger.entry (per D-02)
+        self._ledger_producer = LedgerEntryProducer(bootstrap_servers)
+
+        # Manual review repository — writes FLAGGED+manual_review events to manual_review_queue (per D-05)
+        self._review_repo = ManualReviewRepository(self._state_machine._engine)
+
         # Prometheus counters
         self._feature_miss_counter = Counter(
             "feature_miss_total",
@@ -144,6 +154,14 @@ class ScoringConsumer:
         self._events_flagged_counter = Counter(
             "events_flagged_total",
             "Total events flagged as high-risk (risk_score >= 0.7)",
+        )
+        self._ledger_published_counter = Counter(
+            "ledger_published_total",
+            "Total events published to payment.ledger.entry",
+        )
+        self._manual_review_counter = Counter(
+            "manual_review_queued_total",
+            "Total events queued for manual review",
         )
 
         self._consumer.subscribe([SOURCE_TOPIC])
@@ -304,6 +322,34 @@ class ScoringConsumer:
             )
             self._events_flagged_counter.inc()
 
+        # Step 12a: Publish to payment.ledger.entry for AUTHORIZED events (per D-02, D-04)
+        # FLAGGED events do NOT publish to payment.ledger.entry
+        if final_state == PaymentState.AUTHORIZED:
+            ledger_event = {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "amount_cents": event.amount_cents,
+                "currency": event.currency,
+                "merchant_id": event.merchant_id,
+                "source_event_id": event.event_id,
+                "stripe_customer_id": event.stripe_customer_id,
+                "risk_score": risk_result.risk_score,
+            }
+            self._ledger_producer.publish(
+                stripe_event_id=event.event_id,
+                ledger_event=ledger_event,
+            )
+            self._ledger_published_counter.inc()
+
+        # Step 12b: Queue for manual review on FLAGGED + manual_review=True (per D-05)
+        if final_state == PaymentState.FLAGGED and risk_result.manual_review:
+            self._review_repo.insert(
+                transaction_id=event.event_id,
+                risk_score=risk_result.risk_score,
+                payload=scored_event.model_dump(mode="json"),
+            )
+            self._manual_review_counter.inc()
+
         # Step 13: Increment scored counter
         self._events_scored_counter.inc()
 
@@ -361,6 +407,7 @@ class ScoringConsumer:
         self._consumer.close()
         self._scored_producer.close()
         self._alert_producer.close()
+        self._ledger_producer.close()
         logger.info("scoring_consumer_stopped")
 
 
