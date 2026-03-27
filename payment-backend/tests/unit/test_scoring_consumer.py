@@ -63,6 +63,8 @@ def _make_consumer_no_init() -> "ScoringConsumer":  # type: ignore[name-defined]
     # Mock Kafka producers
     consumer._scored_producer = MagicMock()
     consumer._alert_producer = MagicMock()
+    consumer._ledger_producer = MagicMock()
+    consumer._review_repo = MagicMock()
 
     # Real Prometheus counters (use unique names to avoid re-registration collision)
     import time as _time
@@ -71,6 +73,8 @@ def _make_consumer_no_init() -> "ScoringConsumer":  # type: ignore[name-defined]
     consumer._feature_timeout_counter = Counter(f"feature_timeout_total_{ts}", "test")
     consumer._events_scored_counter = Counter(f"events_scored_total_{ts}", "test")
     consumer._events_flagged_counter = Counter(f"events_flagged_total_{ts}", "test")
+    consumer._ledger_published_counter = Counter(f"ledger_published_total_{ts}", "test")
+    consumer._manual_review_counter = Counter(f"manual_review_queued_total_{ts}", "test")
 
     consumer._running = True
     consumer._health_server = None
