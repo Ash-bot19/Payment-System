@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: BigQuery + dbt
-status: in-progress
-stopped_at: Completed 08-01-PLAN.md — Phase 8 Plan 1 (reconciliation_discrepancies migration + persist_discrepancies DAG task) DONE
-last_updated: "2026-03-28T09:36:00Z"
+milestone: v1.4
+milestone_name: Ledger + Reconciliation
+status: unknown
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-28T09:42:51.644Z"
 progress:
-  total_phases: 3
+  total_phases: 2
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -56,6 +56,7 @@ Plan: 01 complete, 02 next
 | Phase 07 P03 | 5 | 2 tasks | 6 files |
 | Phase 07-reconciliation-airflow P03 | 5min | 3 tasks | 6 files |
 | Phase 08-bigquery-dbt P01 | 4min | 2 tasks | 4 files |
+| Phase 08-bigquery-dbt P02 | 515 | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 08-01]: Table() schema defined without autoload_with in persist_discrepancies — prevents DB connection at DAG parse time (Airflow parses all DAG files on scheduler start)
 - [Phase 08-01]: id and created_at omitted from Core insert() Table definition — PostgreSQL assigns BIGSERIAL and NOW() server defaults automatically
 - [Phase 08-01]: compare_and_publish returns messages list directly for XCom transport to persist_discrepancies
+- [Phase 08-bigquery-dbt]: dbt dev profile uses dbt-postgres against docker-compose PostgreSQL; prod profile is bigquery placeholder for Phase 11
+- [Phase 08-bigquery-dbt]: DISTINCT ON used in stg_transactions for dev; ROW_NUMBER() alternative documented for Phase 11 BigQuery migration
+- [Phase 08-bigquery-dbt]: dbt-bigquery excluded from requirements.txt — large GCP deps deferred to Phase 11
 
 ### Pending Todos
 
@@ -128,6 +132,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T09:36:00Z
-Stopped at: Completed 08-01-PLAN.md — Phase 8 Plan 1 (reconciliation_discrepancies migration + persist_discrepancies DAG task) DONE
+Last session: 2026-03-28T09:42:51.637Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
