@@ -1,0 +1,30 @@
+name: payment_system
+config-version: 2
+version: "1.0.0"
+profile: payment_system
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  payment_system:
+    staging:
+      +materialized: view
+    dimensions:
+      +materialized: table
+    facts:
+      +materialized: table
+    marts:
+      +materialized: table
+
+seeds:
+  payment_system:
+    imbalanced_transaction:
+      +column_types:
+        transaction_id: text
+        debit_amount_cents: bigint
+        credit_amount_cents: bigint
