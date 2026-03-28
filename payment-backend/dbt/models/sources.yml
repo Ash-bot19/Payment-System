@@ -1,0 +1,56 @@
+version: 2
+
+sources:
+  - name: payment_db
+    database: payment_db
+    schema: public
+    tables:
+      - name: payment_state_log
+        description: "Append-only state machine log. One row per state transition per transaction."
+        columns:
+          - name: transaction_id
+            data_tests:
+              - not_null
+          - name: to_state
+            data_tests:
+              - not_null
+          - name: merchant_id
+            data_tests:
+              - not_null
+
+      - name: ledger_entries
+        description: "Double-entry ledger. Append-only. 1 DEBIT + 1 CREDIT per SETTLED transaction."
+        columns:
+          - name: transaction_id
+            data_tests:
+              - not_null
+          - name: entry_type
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['DEBIT', 'CREDIT']
+          - name: amount_cents
+            data_tests:
+              - not_null
+          - name: merchant_id
+            data_tests:
+              - not_null
+
+      - name: reconciliation_discrepancies
+        description: "Persisted discrepancies from nightly reconciliation DAG (migration 004)."
+        columns:
+          - name: id
+            data_tests:
+              - unique
+              - not_null
+          - name: transaction_id
+            data_tests:
+              - not_null
+          - name: discrepancy_type
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['MISSING_INTERNALLY', 'AMOUNT_MISMATCH', 'DUPLICATE_LEDGER']
+          - name: merchant_id
+            data_tests:
+              - not_null

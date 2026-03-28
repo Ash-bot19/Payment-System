@@ -1,0 +1,2 @@
+transaction_id,debit_amount_cents,credit_amount_cents
+imbalanced_test_001,10000,9999

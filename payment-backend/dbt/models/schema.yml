@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: "Latest state per transaction from payment_state_log, joined to DEBIT amount."
+    columns:
+      - name: transaction_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: stg_ledger_entries
+    description: "All ledger entries from ledger_entries source."
+    columns:
+      - name: transaction_id
+        data_tests:
+          - not_null
+      - name: entry_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['DEBIT', 'CREDIT']
+
+  - name: dim_merchants
+    description: "Stub merchant dimension — distinct merchant_ids from ledger_entries."
+    columns:
+      - name: merchant_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_users
+    description: "Stub user dimension — distinct event_ids from payment_state_log (proxy for users)."
+    columns:
+      - name: event_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: fact_ledger_balanced
+    description: "One row per transaction: debit and credit amounts side by side."
+    columns:
+      - name: transaction_id
+        data_tests:
+          - not_null
+          - unique
+      - name: debit_amount_cents
+        data_tests:
+          - not_null
+      - name: credit_amount_cents
+        data_tests:
+          - not_null
