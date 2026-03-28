@@ -81,9 +81,14 @@ Plans:
 
 #### Phase 8: BigQuery + dbt
 
-**Goal**: Stream ledger and transaction data to BigQuery, build dbt models (staging → dimensions → facts → marts), run custom assert_ledger_balanced test.
+**Goal**: Build dbt transformation layer (staging → dimensions → facts → marts) against PostgreSQL dev adapter, persist Airflow reconciliation discrepancies, run assert_ledger_balanced custom test. BigQuery export is a Phase 11 placeholder.
 **Depends on**: Phase 7
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Migration 004 (reconciliation_discrepancies) + ReconciliationDiscrepancy ORM + persist_discrepancies DAG task + updated unit tests
+- [ ] 08-02-PLAN.md — Full dbt project scaffold: 10 models (staging/dimensions/facts/marts) + assert_ledger_balanced singular test + imbalanced_transaction seed
+- [ ] 08-03-PLAN.md — export_to_bigquery placeholder + .env.example GCP vars + integration tests (persist_discrepancies live) + E2E tests (dbt run + dbt test)
 
 #### Phase 9: Dashboard + Monitoring
 
@@ -114,7 +119,7 @@ Plans:
 | 5. ML Risk Scoring Service | v1.3 | 3/3 | Complete   | 2026-03-26 |
 | 6. Financial Ledger | v1.4 | 2/2 | Complete | 2026-03-27 |
 | 7. Reconciliation + Airflow | v1.4 | 3/3 | Complete   | 2026-03-27 |
-| 8. BigQuery + dbt | v2.0 | 0/TBD | Not started | - |
+| 8. BigQuery + dbt | v2.0 | 0/3 | Not started | - |
 | 9. Dashboard + Monitoring | v2.0 | 0/TBD | Not started | - |
 | 10. Feature Replay Engine | v2.0 | 0/TBD | Not started | - |
 | 11. GCP Deploy + CI/CD | v2.0 | 0/TBD | Not started | - |
