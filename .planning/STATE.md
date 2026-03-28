@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Ledger + Reconciliation
-status: unknown
-stopped_at: Completed 07-03-PLAN.md — Phase 7 reconciliation-airflow DONE, human UAT approved 2026-03-28
-last_updated: "2026-03-27T19:51:29.905Z"
+milestone: v2.0
+milestone_name: BigQuery + dbt
+status: in-progress
+stopped_at: Completed 08-01-PLAN.md — Phase 8 Plan 1 (reconciliation_discrepancies migration + persist_discrepancies DAG task) DONE
+last_updated: "2026-03-28T09:36:00Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 07 — reconciliation-airflow
+**Current focus:** Phase 08 — bigquery-dbt
 
 ## Current Position
 
-Phase: 07
-Plan: Not started
+Phase: 08
+Plan: 01 complete, 02 next
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: Not started
 | Phase 07-reconciliation-airflow P02 | 7 | 1 tasks | 3 files |
 | Phase 07 P03 | 5 | 2 tasks | 6 files |
 | Phase 07-reconciliation-airflow P03 | 5min | 3 tasks | 6 files |
+| Phase 08-bigquery-dbt P01 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 07-03]: LocalExecutor (not CeleryExecutor) for local dev Airflow — single-node, no Redis/RabbitMQ broker overhead
 - [Phase 07-03]: Shared PostgreSQL for Airflow metadata + app tables in local dev — reduces docker-compose service count, acceptable for dev
 - [Phase 07-03]: DAGs baked into Airflow image via COPY (not volume mount) — deterministic image, no host path dependency
+- [Phase 08-01]: Table() schema defined without autoload_with in persist_discrepancies — prevents DB connection at DAG parse time (Airflow parses all DAG files on scheduler start)
+- [Phase 08-01]: id and created_at omitted from Core insert() Table definition — PostgreSQL assigns BIGSERIAL and NOW() server defaults automatically
+- [Phase 08-01]: compare_and_publish returns messages list directly for XCom transport to persist_discrepancies
 
 ### Pending Todos
 
@@ -124,6 +128,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T19:45:17.448Z
-Stopped at: Completed 07-03-PLAN.md — Phase 7 reconciliation-airflow DONE, human UAT approved 2026-03-28
+Last session: 2026-03-28T09:36:00Z
+Stopped at: Completed 08-01-PLAN.md — Phase 8 Plan 1 (reconciliation_discrepancies migration + persist_discrepancies DAG task) DONE
 Resume file: None
