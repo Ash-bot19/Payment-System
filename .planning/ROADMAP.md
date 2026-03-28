@@ -92,9 +92,14 @@ Plans:
 
 #### Phase 9: Dashboard + Monitoring
 
-**Goal**: Streamlit observability dashboard wired to BigQuery marts + Prometheus; Grafana alerts for SLA breaches.
+**Goal**: Streamlit observability dashboard connected to PostgreSQL dbt mart tables; Prometheus scraping ml_service; Grafana alert rules provisioned as JSON. BigQuery connection deferred to Phase 11.
 **Depends on**: Phase 8
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Seed script + Prometheus/Grafana config (prometheus.yml, ml_service instrumentator, Grafana datasource + alert rules JSON)
+- [ ] 09-02-PLAN.md — Streamlit dashboard (queries module, 4 pages, app.py, Dockerfile, docker-compose service, unit tests)
+- [ ] 09-03-PLAN.md — E2E tests + human visual verification (Streamlit, Prometheus targets, Grafana alert rules)
 
 #### Phase 10: Feature Replay Engine
 
@@ -120,6 +125,6 @@ Plans:
 | 6. Financial Ledger | v1.4 | 2/2 | Complete | 2026-03-27 |
 | 7. Reconciliation + Airflow | v1.4 | 3/3 | Complete   | 2026-03-27 |
 | 8. BigQuery + dbt | v2.0 | 2/3 | In Progress|  |
-| 9. Dashboard + Monitoring | v2.0 | 0/TBD | Not started | - |
+| 9. Dashboard + Monitoring | v2.0 | 0/3 | Not started | - |
 | 10. Feature Replay Engine | v2.0 | 0/TBD | Not started | - |
 | 11. GCP Deploy + CI/CD | v2.0 | 0/TBD | Not started | - |
