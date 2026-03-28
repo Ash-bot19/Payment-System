@@ -138,28 +138,31 @@ def _get_db_engine():
     return create_engine(url)
 
 
-def _insert_ledger_row(engine, transaction_id: str, entry_type: str, amount_cents: int, ds: str) -> None:
-    """Insert a single ledger row with created_at inside the ds window."""
+def _insert_ledger_pair(engine, transaction_id: str, amount_cents: int, ds: str) -> None:
+    """Insert a balanced DEBIT+CREDIT pair in one transaction (required by balance trigger)."""
     from sqlalchemy import text
 
     created_at = f"{ds} 12:00:00+00"
+    insert_sql = text(
+        """
+        INSERT INTO ledger_entries
+            (transaction_id, entry_type, amount_cents, currency, merchant_id, source_event_id, created_at)
+        VALUES
+            (:tid, :entry_type, :amount_cents, 'USD', 'e2e_test_merchant', :source_event_id, :created_at)
+        """
+    )
     with engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO ledger_entries
-                    (transaction_id, entry_type, amount_cents, currency, merchant_id, created_at)
-                VALUES
-                    (:tid, :entry_type, :amount_cents, 'USD', 'e2e_test_merchant', :created_at)
-                """
-            ),
-            {
-                "tid": transaction_id,
-                "entry_type": entry_type,
-                "amount_cents": amount_cents,
-                "created_at": created_at,
-            },
-        )
+        for entry_type in ("DEBIT", "CREDIT"):
+            conn.execute(
+                insert_sql,
+                {
+                    "tid": transaction_id,
+                    "entry_type": entry_type,
+                    "amount_cents": amount_cents,
+                    "source_event_id": transaction_id,
+                    "created_at": created_at,
+                },
+            )
 
 
 def _consume_from_topic(topic: str, group_id: str, timeout_seconds: int = 10) -> list[dict]:
@@ -185,7 +188,7 @@ def _consume_from_topic(topic: str, group_id: str, timeout_seconds: int = 10) ->
     empty_polls = 0
 
     try:
-        while time.time() < deadline and empty_polls < 3:
+        while time.time() < deadline and empty_polls < 10:
             msg = consumer.poll(timeout=1.0)
             if msg is None:
                 empty_polls += 1
@@ -227,10 +230,8 @@ def test_detect_duplicates_publishes_to_kafka():
     ds = "2026-03-26"  # Use a past date to avoid collisions with normal usage
 
     # Insert 4 rows (2 DEBIT + 2 CREDIT) for same tx_id — triggers DUPLICATE_LEDGER
-    _insert_ledger_row(engine, tx_id, "DEBIT", 1000, ds=ds)
-    _insert_ledger_row(engine, tx_id, "CREDIT", 1000, ds=ds)
-    _insert_ledger_row(engine, tx_id, "DEBIT", 1000, ds=ds)
-    _insert_ledger_row(engine, tx_id, "CREDIT", 1000, ds=ds)
+    _insert_ledger_pair(engine, tx_id, 1000, ds=ds)
+    _insert_ledger_pair(engine, tx_id, 1000, ds=ds)
 
     # Call the task function directly (not via Airflow runtime)
     from airflow.dags.nightly_reconciliation import detect_duplicates

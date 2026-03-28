@@ -128,38 +128,41 @@ def db_engine():
     engine.dispose()
 
 
-def _insert_ledger_row(
+def _insert_ledger_pair(
     engine,
     transaction_id: str,
-    entry_type: str,
     amount_cents: int,
     merchant_id: str = "test_merchant",
     ds: str = "2026-03-27",
 ) -> None:
-    """Insert a single row into ledger_entries.
+    """Insert a balanced DEBIT+CREDIT pair into ledger_entries in one transaction.
 
-    Uses a fixed created_at inside the ds window so detect_duplicates and
-    compare_and_publish will find it in their time range queries.
+    The balance trigger (DEFERRABLE INITIALLY DEFERRED) fires at COMMIT, so both
+    rows must be inserted in the same transaction to satisfy SUM(amount_cents) = 0.
+    compare_and_publish only queries DEBIT rows, so this is safe for all test cases.
     """
     created_at = f"{ds} 12:00:00+00"
+    insert_sql = text(
+        """
+        INSERT INTO ledger_entries
+            (transaction_id, entry_type, amount_cents, currency, merchant_id, source_event_id, created_at)
+        VALUES
+            (:tid, :entry_type, :amount_cents, 'USD', :merchant_id, :source_event_id, :created_at)
+        """
+    )
     with engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO ledger_entries
-                    (transaction_id, entry_type, amount_cents, currency, merchant_id, created_at)
-                VALUES
-                    (:tid, :entry_type, :amount_cents, 'USD', :merchant_id, :created_at)
-                """
-            ),
-            {
-                "tid": transaction_id,
-                "entry_type": entry_type,
-                "amount_cents": amount_cents,
-                "merchant_id": merchant_id,
-                "created_at": created_at,
-            },
-        )
+        for entry_type in ("DEBIT", "CREDIT"):
+            conn.execute(
+                insert_sql,
+                {
+                    "tid": transaction_id,
+                    "entry_type": entry_type,
+                    "amount_cents": amount_cents,
+                    "merchant_id": merchant_id,
+                    "source_event_id": transaction_id,
+                    "created_at": created_at,
+                },
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -182,8 +185,7 @@ def test_detect_duplicates_finds_tripled_entries(db_engine):
 
     # Insert 6 rows = 3 pairs (all same transaction_id, violating the 2-row contract)
     for _ in range(3):
-        _insert_ledger_row(db_engine, tx_id, "DEBIT", 1000, ds=ds)
-        _insert_ledger_row(db_engine, tx_id, "CREDIT", 1000, ds=ds)
+        _insert_ledger_pair(db_engine, tx_id, 1000, ds=ds)
 
     mock_producer = MagicMock()
 
@@ -221,8 +223,7 @@ def test_detect_duplicates_ignores_normal_pairs(db_engine):
     tx_id = f"integ_ok_pair_{uuid4().hex[:10]}"
     ds = "2026-03-27"
 
-    _insert_ledger_row(db_engine, tx_id, "DEBIT", 2000, ds=ds)
-    _insert_ledger_row(db_engine, tx_id, "CREDIT", 2000, ds=ds)
+    _insert_ledger_pair(db_engine, tx_id, 2000, ds=ds)
 
     mock_producer = MagicMock()
 
@@ -306,8 +307,8 @@ def test_compare_and_publish_type3_amount_mismatch(db_engine):
     pi_id = f"pi_mismatch_{uuid4().hex[:10]}"
     ds = "2026-03-27"
 
-    # Internal DEBIT row with 1000 cents
-    _insert_ledger_row(db_engine, pi_id, "DEBIT", 1000, ds=ds)
+    # Balanced pair with DEBIT(1000) — compare_and_publish queries only DEBIT rows
+    _insert_ledger_pair(db_engine, pi_id, 1000, ds=ds)
 
     # Stripe says 1500 cents — mismatch of 500
     stripe_intents = {
@@ -357,8 +358,8 @@ def test_compare_and_publish_clean_match(db_engine):
     pi_id = f"pi_clean_{uuid4().hex[:10]}"
     ds = "2026-03-27"
 
-    # Internal DEBIT row with 1000 cents
-    _insert_ledger_row(db_engine, pi_id, "DEBIT", 1000, ds=ds)
+    # Balanced pair with DEBIT(1000) — compare_and_publish queries only DEBIT rows
+    _insert_ledger_pair(db_engine, pi_id, 1000, ds=ds)
 
     # Stripe agrees: also 1000 cents
     stripe_intents = {
