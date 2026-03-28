@@ -128,6 +128,17 @@ TDD task with two phases:
 
 None — all fields are wired. `FeatureVector` all 8 fields required (no defaults). `RiskScore` thresholds encoded at construction. `FEATURE_DEFAULTS` returns meaningful conservative values that produce real inference results from the committed model.
 
+## Self-Check: PASSED
+
+- FOUND: payment-backend/models/ml_scoring.py
+- FOUND: payment-backend/ml/scorer.py
+- FOUND: payment-backend/ml/train.py
+- FOUND: payment-backend/ml/models/model.ubj
+- FOUND: payment-backend/tests/unit/ml/test_scorer.py
+- FOUND: commit 17d8b80 (RED — failing tests)
+- FOUND: commit f34c4fc (GREEN — implementation)
+- FOUND: commit 1babb68 (docs — SUMMARY + STATE + ROADMAP)
+
 ## Next Phase Readiness
 
 - Plan 02 (`ScoringConsumer` + FastAPI) can import `XGBoostScorer`, `FEATURE_DEFAULTS`, `FeatureVector`, `RiskScore`, `ScoredPaymentEvent` from `ml.scorer` and `models.ml_scoring`

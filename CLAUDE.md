@@ -155,8 +155,23 @@ M5: Financial Ledger — DONE 2026-03-27 (GSD milestone: v1.4 — Phase 6)
   ✅ 128 unit tests total (all passing)
   ✅ Human UAT passed 2026-03-27: migrations 002+003 applied, all 3 DB triggers verified, balanced insert succeeded, single DEBIT correctly rejected, container healthy, 6 ledger rows written, SETTLED state transitions confirmed
   ✅ Bug fixed: LedgerConsumer missing enable.auto.offset.store=false — store_offsets() requires it (commit a875500)
-M6: Reconciliation + Airflow — TODO
-M7: BigQuery + dbt — TODO
+M6: Reconciliation + Airflow — DONE 2026-03-28 (GSD milestone: v1.5 — Phase 7)
+  ✅ Phase 7: Reconciliation + Airflow — DONE 2026-03-28
+      - 07-01: ReconciliationMessage Pydantic v2 model (10 D-11 fields, Literal enum, run_date: date) + ReconciliationProducer (backoff [1,2,4], publish_batch) + 20 unit tests
+      - 07-02: nightly_reconciliation Airflow TaskFlow DAG (@daily, catchup=False) — detect_duplicates + fetch_stripe_window parallel → compare_and_publish (MISSING_INTERNALLY, AMOUNT_MISMATCH, DUPLICATE_LEDGER) + 19 unit tests
+      - 07-03: Airflow Dockerfile (apache/airflow:2.9.3-python3.11) + docker-compose 3 services (airflow-init, airflow-webserver:8080, airflow-scheduler) + requirements-airflow.txt + integration + E2E tests (skip gracefully without live stack)
+  ✅ 174 tests total — 167 unit + 5 integration + 2 E2E (all passing)
+  ✅ Human UAT passed 2026-03-28: Airflow UI at :8080 shows nightly_reconciliation DAG + 3 tasks; 7/7 integration+E2E tests pass against live stack
+  ✅ Bug fixed: test helpers used single-row transactions — balance trigger requires DEBIT+CREDIT in same tx; replaced _insert_ledger_row with _insert_ledger_pair
+  ✅ Bug fixed: sqlalchemy>=2.0 in requirements-airflow.txt broke Airflow 2.9 ORM — removed, let Airflow manage its own SQLAlchemy version
+M7: BigQuery + dbt — DONE 2026-03-28 (GSD milestone: v2.0 — Phase 8)
+  ✅ Phase 8: BigQuery + dbt — DONE 2026-03-28
+      - 08-01: Alembic migration 004 (reconciliation_discrepancies table, append-only trigger) + ReconciliationDiscrepancy ORM model + DAG extended with persist_discrepancies + export_to_bigquery (Phase 11 placeholder) + 27 unit tests
+      - 08-02: dbt project scaffold (dbt_project.yml, profiles.yml dev+prod) + all 10 models (stg_transactions, stg_ledger_entries, dim_merchants, dim_users, fact_transactions, fact_ledger_balanced, reconciliation_summary, fraud_metrics, hourly_payment_volume, merchant_performance) + sources/schema YAML + assert_ledger_balanced singular test + imbalanced_transaction seed
+      - 08-03: integration tests (persist_discrepancies vs live PostgreSQL, UUID isolation) + E2E tests (dbt compile/run/test via subprocess) + GCP env vars in .env.example + dbt-core/dbt-postgres in requirements.txt
+  ✅ 175 unit tests + 28 dbt tests (reported separately) — all passing
+  ✅ Human UAT passed 2026-03-28: migration 004 applied, dbt debug OK, dbt run 10/10 models, dbt test 28/28 pass (assert_ledger_balanced ✓), 5/5 integration + 5/5 E2E tests pass
+  ✅ Bug fixed: nightly_reconciliation.py DATABASE_URL_SYNC defaults to @postgres (Docker hostname) — run integration tests from host with DATABASE_URL_SYNC=postgresql://payment:payment@localhost:5432/payment_db
 M8: Dashboard + Monitoring — TODO
 M9: Feature Replay Engine — TODO
 M10: GCP Deploy + CI/CD — TODO
@@ -184,6 +199,13 @@ Always start infra containers first (zookeeper kafka redis postgres), then build
 Kafka consumer using store_offsets() requires enable.auto.offset.store=False in Consumer config — missing it causes KafkaError{code=_INVALID_ARG} at every offset commit
 Alembic must be run from payment-backend/ root with PYTHONPATH set: `PYTHONPATH="..." alembic -c db/alembic.ini upgrade head` — running from db/ dir fails with ModuleNotFoundError on models/
 Ledger balance trigger uses accounting formula: SUM(CREDIT amounts) - SUM(DEBIT amounts) = 0 (both amounts_cents are always positive per CLAUDE.md — do NOT use negative values for CREDIT rows)
+webhook-service uses localhost:9092 from .env but needs kafka:29092 inside Docker — always add environment override in docker-compose.yml for any service that env_file loads .env
+webhook-service image has no curl — use python urllib for healthcheck (same as other services)
+Do NOT put sqlalchemy>=2.0 in requirements-airflow.txt — Airflow 2.9 bundles SQLAlchemy 1.4 internally; overriding it breaks Airflow's ORM models (MappedAnnotationError on TaskInstance)
+If Airflow DB gets into a partial migration state (e.g. after sqlalchemy version conflict), run: docker run --rm --network infra_default -e ... infra-airflow-init bash -c "airflow db reset --yes && airflow db migrate && airflow users create ..."
+nightly_reconciliation.py DATABASE_URL_SYNC defaults to @postgres (Docker hostname for Airflow containers) — when running integration tests from host machine, override: `DATABASE_URL_SYNC=postgresql://payment:payment@localhost:5432/payment_db pytest ...`
+Alembic version mismatch after Airflow run: Airflow writes its own hash-based alembic_version; fix with `docker exec postgres psql -U payment -d payment_db -c "UPDATE alembic_version SET version_num = '003';"` then re-run upgrade
+dbt must be installed in .venv via pip: `pip install dbt-core==1.8.9 dbt-postgres==1.8.2` — not in requirements.txt by default for Docker builds (only needed for local dev + tests)
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget

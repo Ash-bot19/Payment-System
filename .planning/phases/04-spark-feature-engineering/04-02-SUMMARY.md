@@ -132,6 +132,17 @@ None — all features are wired. The tx_velocity_1m and tx_velocity_5m values in
 - Plan 03 adds spark/Dockerfile, docker-compose spark-feature-engine service, and end-to-end Kafka→Spark→Redis integration test
 - ML scoring (Phase 5) can read feat:{event_id} from Redis once the Spark job is running
 
+## Self-Check: PASSED
+
+- FOUND: payment-backend/spark/feature_engineering.py
+- FOUND: payment-backend/tests/integration/spark/__init__.py
+- FOUND: payment-backend/tests/integration/spark/conftest.py
+- FOUND: payment-backend/tests/integration/spark/test_feature_engineering_job.py
+- FOUND: .planning/phases/04-spark-feature-engineering/04-02-SUMMARY.md
+- FOUND: commit 9f62a77 (feat: feature_engineering.py)
+- FOUND: commit 7616b30 (test: integration tests)
+- FOUND: commit 1b3e7ef (docs: plan metadata)
+
 ---
 *Phase: 04-spark-feature-engineering*
 *Completed: 2026-03-25*

@@ -125,6 +125,16 @@ None - no external service configuration required beyond what was already in .en
 - All containers healthy and accessible: scoring-consumer (8003), ml-scoring-service (8001), validation-consumer (8002), webhook-service (8000), Kafka (9092), Redis (6379), PostgreSQL (5432)
 - No blockers for Phase 6
 
+## Self-Check: PASSED
+
+- FOUND: payment-backend/infra/Dockerfile.scoring-consumer
+- FOUND: payment-backend/infra/Dockerfile.ml-service
+- FOUND: payment-backend/tests/e2e/test_phase5_e2e.py
+- FOUND: .planning/phases/05-ml-risk-scoring/05-03-SUMMARY.md
+- FOUND commit: 784c8c0 (feat: Dockerfiles + docker-compose + E2E tests)
+- FOUND commit: 557d358 (fix: decode_responses=True in E2E Redis client)
+- FOUND commit: d7f2fba (docs: plan metadata)
+
 ---
 *Phase: 05-ml-risk-scoring*
 *Completed: 2026-03-26*
