@@ -1,4 +1,4 @@
-"""Nightly reconciliation Airflow DAG — Phase 07, Plan 02 / Phase 08, Plan 01.
+"""Nightly reconciliation Airflow DAG — Phase 07, Plan 02 / Phase 08, Plans 01+03.
 
 Compares internal ledger entries against Stripe API data for a given UTC day.
 Detects 3 discrepancy types per D-01 and publishes each to
@@ -12,13 +12,15 @@ Discrepancy types:
   - AMOUNT_MISMATCH (Type 3): Both sides exist but amounts differ.
 
 DAG task dependency:
-  detect_duplicates ─┐  (run in parallel)
+  detect_duplicates ─┐  (parallel)
                      │
   fetch_stripe_window ─> compare_and_publish ─> persist_discrepancies
+                                             ─> export_to_bigquery (Phase 11 prep)
 
 Note: compare_and_publish depends only on fetch_stripe_window for XCom data.
 detect_duplicates runs in parallel and is independent.
 persist_discrepancies receives the compare_and_publish discrepancy list via XCom.
+export_to_bigquery is independent — reads directly from PostgreSQL (no XCom dependency).
 
 Task functions are defined at module level for testability. The @dag body
 wires them with Airflow TaskFlow XCom references.
@@ -55,6 +57,8 @@ DATABASE_URL_SYNC = os.environ.get(
     "postgresql://payment:payment@postgres:5432/payment_db",
 )
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")  # TODO: set in Phase 11
+BIGQUERY_DATASET = os.environ.get("BIGQUERY_DATASET", "payment_analytics")  # TODO: Phase 11
 
 
 @task()
@@ -343,6 +347,41 @@ def persist_discrepancies(
     return len(discrepancies)
 
 
+@task()
+def export_to_bigquery(last_cursor: str | None = None) -> None:
+    """Export new ledger rows to BigQuery using created_at as incremental cursor.
+
+    PHASE 11 IMPLEMENTATION — this task is a placeholder. It exits cleanly
+    when GCP_PROJECT_ID is not set, which is the case for all local dev runs.
+
+    Phase 11 implementation pattern:
+        from google.cloud import bigquery
+        import pandas as pd
+        engine = create_engine(DATABASE_URL_SYNC)
+        df = pd.read_sql(
+            "SELECT * FROM ledger_entries WHERE created_at > %(cursor)s",
+            engine,
+            params={"cursor": last_cursor or "1970-01-01"},
+        )
+        client = bigquery.Client(project=GCP_PROJECT_ID)
+        table_id = f"{GCP_PROJECT_ID}.{BIGQUERY_DATASET}.ledger_entries"
+        job = client.load_table_from_dataframe(
+            df, table_id,
+            job_config=bigquery.LoadJobConfig(write_disposition="WRITE_APPEND"),
+        )
+        job.result()  # wait for completion
+    """
+    if not GCP_PROJECT_ID:
+        logger.info(
+            "export_to_bigquery_skipped",
+            reason="GCP_PROJECT_ID_not_set",
+            phase="11_prep",
+        )
+        return
+    # TODO: Phase 11 — implement BQ export (see docstring for pattern)
+    logger.info("export_to_bigquery_called", gcp_project=GCP_PROJECT_ID)
+
+
 @dag(
     dag_id="nightly_reconciliation",
     schedule="@daily",
@@ -352,14 +391,20 @@ def persist_discrepancies(
     default_args={"retries": 1, "retry_delay": timedelta(minutes=5)},
 )
 def nightly_reconciliation() -> None:
-    """Nightly DAG: detect ledger duplicates and compare against Stripe API."""
-    # detect_duplicates and fetch_stripe_window run in parallel.
-    # compare_and_publish depends on fetch_stripe_window XCom output.
-    # persist_discrepancies receives the discrepancy list from compare_and_publish via XCom.
-    dupes = detect_duplicates()  # noqa: F841
+    """Nightly DAG: detect ledger duplicates, compare against Stripe API,
+    persist discrepancies, and export to BigQuery (Phase 11).
+
+    Task dependency graph:
+      detect_duplicates ─┐  (parallel)
+                         │
+      fetch_stripe_window ─> compare_and_publish ─> persist_discrepancies
+                                                 ─> export_to_bigquery (Phase 11 prep)
+    """
+    dupes = detect_duplicates()               # noqa: F841
     stripe_data = fetch_stripe_window()
     discrepancy_list = compare_and_publish(stripe_data)
-    persist_discrepancies(discrepancy_list)
+    persist_discrepancies(discrepancy_list)   # depends on compare_and_publish
+    export_to_bigquery()                      # independent — Phase 11 prep
 
 
 nightly_reconciliation()
