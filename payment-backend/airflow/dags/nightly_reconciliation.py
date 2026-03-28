@@ -1,8 +1,10 @@
-"""Nightly reconciliation Airflow DAG — Phase 07, Plan 02.
+"""Nightly reconciliation Airflow DAG — Phase 07, Plan 02 / Phase 08, Plan 01.
 
 Compares internal ledger entries against Stripe API data for a given UTC day.
 Detects 3 discrepancy types per D-01 and publishes each to
 payment.reconciliation.queue via ReconciliationProducer.
+Persists discrepancy rows to reconciliation_discrepancies PostgreSQL table
+for downstream dbt mart consumption (Phase 8).
 
 Discrepancy types:
   - DUPLICATE_LEDGER (Type 4): Internal ledger has >2 rows per transaction.
@@ -12,10 +14,11 @@ Discrepancy types:
 DAG task dependency:
   detect_duplicates ─┐  (run in parallel)
                      │
-  fetch_stripe_window ─> compare_and_publish
+  fetch_stripe_window ─> compare_and_publish ─> persist_discrepancies
 
 Note: compare_and_publish depends only on fetch_stripe_window for XCom data.
 detect_duplicates runs in parallel and is independent.
+persist_discrepancies receives the compare_and_publish discrepancy list via XCom.
 
 Task functions are defined at module level for testability. The @dag body
 wires them with Airflow TaskFlow XCom references.
@@ -28,7 +31,18 @@ from typing import Any
 import stripe
 import structlog
 from airflow.decorators import dag, task
-from sqlalchemy import create_engine, text
+from sqlalchemy import (
+    BigInteger,
+    Column,
+    Date,
+    MetaData,
+    Table,
+    TIMESTAMP,
+    Text,
+    create_engine,
+    insert,
+    text,
+)
 
 from kafka.producers.reconciliation_producer import ReconciliationProducer
 from models.reconciliation import ReconciliationMessage
@@ -170,7 +184,9 @@ def fetch_stripe_window(ds: str | None = None) -> dict[str, Any]:
 
 
 @task()
-def compare_and_publish(stripe_intents: dict[str, Any], ds: str | None = None) -> None:
+def compare_and_publish(
+    stripe_intents: dict[str, Any], ds: str | None = None
+) -> list[dict[str, Any]]:
     """Compare internal ledger against Stripe data and publish discrepancies.
 
     Detects:
@@ -182,6 +198,10 @@ def compare_and_publish(stripe_intents: dict[str, Any], ds: str | None = None) -
     Args:
         stripe_intents: Dict keyed by PI id from fetch_stripe_window XCom.
         ds: Airflow execution date string, e.g. '2026-03-27'.
+
+    Returns:
+        List of discrepancy dicts (ReconciliationMessage.model_dump() format).
+        Returns empty list if no discrepancies are found.
     """
     window_start = f"{ds} 00:00:00+00"
     window_end = f"{ds} 23:59:59.999999+00"
@@ -265,6 +285,62 @@ def compare_and_publish(stripe_intents: dict[str, Any], ds: str | None = None) -
         clean_matches=clean_matches,
         run_date=ds,
     )
+    return messages
+
+
+@task()
+def persist_discrepancies(
+    discrepancies: list[dict[str, Any]], ds: str | None = None
+) -> int:
+    """Persist reconciliation discrepancies to reconciliation_discrepancies table.
+
+    Receives discrepancy list from compare_and_publish via XCom.
+    Writes rows using SQLAlchemy Core insert() (append-only pattern).
+    No-ops cleanly if discrepancies list is empty.
+
+    Table schema is defined explicitly (no autoload_with) to avoid a DB
+    connection at DAG parse time — Airflow parses every DAG file on scheduler
+    start, so any top-level DB call would require a live PostgreSQL connection
+    just to load the DAG.
+
+    Args:
+        discrepancies: List of ReconciliationMessage .model_dump() dicts.
+        ds: Airflow execution date string.
+
+    Returns:
+        Count of rows inserted.
+    """
+    if not discrepancies:
+        logger.info("persist_discrepancies_skipped", reason="empty_list", run_date=ds)
+        return 0
+
+    engine = create_engine(DATABASE_URL_SYNC)
+
+    metadata = MetaData()
+    recon_table = Table(
+        "reconciliation_discrepancies",
+        metadata,
+        Column("transaction_id", Text),
+        Column("discrepancy_type", Text),
+        Column("stripe_payment_intent_id", Text),
+        Column("internal_amount_cents", BigInteger),
+        Column("stripe_amount_cents", BigInteger),
+        Column("diff_cents", BigInteger),
+        Column("currency", Text),
+        Column("merchant_id", Text),
+        Column("stripe_created_at", TIMESTAMP(timezone=True)),
+        Column("run_date", Date),
+    )
+
+    with engine.begin() as conn:
+        conn.execute(insert(recon_table), discrepancies)
+
+    logger.info(
+        "persist_discrepancies_written",
+        count=len(discrepancies),
+        run_date=ds,
+    )
+    return len(discrepancies)
 
 
 @dag(
@@ -279,9 +355,11 @@ def nightly_reconciliation() -> None:
     """Nightly DAG: detect ledger duplicates and compare against Stripe API."""
     # detect_duplicates and fetch_stripe_window run in parallel.
     # compare_and_publish depends on fetch_stripe_window XCom output.
+    # persist_discrepancies receives the discrepancy list from compare_and_publish via XCom.
     dupes = detect_duplicates()  # noqa: F841
     stripe_data = fetch_stripe_window()
-    compare_and_publish(stripe_data)
+    discrepancy_list = compare_and_publish(stripe_data)
+    persist_discrepancies(discrepancy_list)
 
 
 nightly_reconciliation()

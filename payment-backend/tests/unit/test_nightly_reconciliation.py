@@ -1,9 +1,10 @@
-"""Unit tests for the nightly_reconciliation Airflow DAG — Phase 07, Plan 02.
+"""Unit tests for the nightly_reconciliation Airflow DAG — Phase 07, Plan 02 / Phase 08, Plan 01.
 
-Tests cover all 3 DAG task functions:
+Tests cover all 4 DAG task functions:
   - detect_duplicates(): SQL GROUP BY HAVING, DUPLICATE_LEDGER publishing
   - fetch_stripe_window(): Stripe API pagination, succeeded filter
-  - compare_and_publish(): MISSING_INTERNALLY + AMOUNT_MISMATCH detection
+  - compare_and_publish(): MISSING_INTERNALLY + AMOUNT_MISMATCH detection, returns list[dict]
+  - persist_discrepancies(): SQLAlchemy Core insert() to reconciliation_discrepancies
 
 All external dependencies (SQLAlchemy, Stripe, Kafka) are mocked.
 No Airflow, PostgreSQL, Stripe, or Kafka required to run these tests.
@@ -444,6 +445,179 @@ class TestCompareAndPublish(unittest.TestCase):
         msg = batch[0]
         assert msg["diff_cents"] == -1000  # 5000 - 6000
 
+    def test_compare_and_publish_returns_discrepancy_list(self) -> None:
+        """compare_and_publish returns a list of discrepancy dicts (not None)."""
+        # One MISSING_INTERNALLY (pi_miss) + one AMOUNT_MISMATCH (pi_mismatch)
+        ledger_row = _make_ledger_row("pi_mismatch", amount_cents=4500)
+        mock_engine, _ = _mock_engine_with_results(iter([ledger_row]))
+
+        mock_prod = MagicMock()
+        with (
+            patch("airflow.dags.nightly_reconciliation.create_engine", return_value=mock_engine),
+            patch("airflow.dags.nightly_reconciliation.ReconciliationProducer", return_value=mock_prod),
+        ):
+            result = dag_module.compare_and_publish(
+                stripe_intents={
+                    "pi_miss": {
+                        "amount": 3000,
+                        "currency": "usd",
+                        "created": 1774656000,
+                        "metadata": {"merchant_id": "merch_001"},
+                    },
+                    "pi_mismatch": {
+                        "amount": 5000,
+                        "currency": "usd",
+                        "created": 1774656000,
+                        "metadata": {"merchant_id": "merch_001"},
+                    },
+                },
+                ds="2026-03-27",
+            )
+
+        assert isinstance(result, list), f"Expected list, got {type(result)}"
+        assert len(result) == 2, f"Expected 2 discrepancies, got {len(result)}"
+        assert all(isinstance(item, dict) for item in result)
+        types_found = {item["discrepancy_type"] for item in result}
+        assert "MISSING_INTERNALLY" in types_found
+        assert "AMOUNT_MISMATCH" in types_found
+
+    def test_compare_and_publish_empty_stripe_no_internal(self) -> None:
+        """compare_and_publish returns empty list when no Stripe data and no internal rows."""
+        mock_engine, _ = _mock_engine_with_results(iter([]))
+
+        with (
+            patch("airflow.dags.nightly_reconciliation.create_engine", return_value=mock_engine),
+            patch("airflow.dags.nightly_reconciliation.ReconciliationProducer"),
+        ):
+            result = dag_module.compare_and_publish(
+                stripe_intents={},
+                ds="2026-03-27",
+            )
+
+        assert result == [], f"Expected empty list, got {result!r}"
+
+
+# ---------------------------------------------------------------------------
+# persist_discrepancies tests
+# ---------------------------------------------------------------------------
+
+
+def _sample_discrepancy(
+    transaction_id: str = "pi_test_001",
+    discrepancy_type: str = "MISSING_INTERNALLY",
+    merchant_id: str = "merch_001",
+) -> dict:
+    """Return a minimal discrepancy dict matching ReconciliationMessage fields."""
+    return {
+        "transaction_id": transaction_id,
+        "discrepancy_type": discrepancy_type,
+        "stripe_payment_intent_id": None,
+        "internal_amount_cents": None,
+        "stripe_amount_cents": None,
+        "diff_cents": None,
+        "currency": "USD",
+        "merchant_id": merchant_id,
+        "stripe_created_at": None,
+        "run_date": "2026-03-28",
+    }
+
+
+def _mock_engine_begin():
+    """Return (mock_engine, mock_conn) wired for engine.begin() context manager."""
+    mock_conn = MagicMock()
+    mock_engine = MagicMock()
+    mock_engine.begin.return_value.__enter__ = MagicMock(return_value=mock_conn)
+    mock_engine.begin.return_value.__exit__ = MagicMock(return_value=False)
+    return mock_engine, mock_conn
+
+
+class TestPersistDiscrepancies(unittest.TestCase):
+    """Tests for persist_discrepancies() task function."""
+
+    def test_persist_discrepancies_empty_list(self) -> None:
+        """persist_discrepancies returns 0 and never calls create_engine for empty list."""
+        with patch(
+            "airflow.dags.nightly_reconciliation.create_engine"
+        ) as mock_create_engine:
+            result = dag_module.persist_discrepancies([], ds="2026-03-28")
+
+        assert result == 0, f"Expected 0, got {result}"
+        mock_create_engine.assert_not_called()
+
+    def test_persist_discrepancies_inserts_rows(self) -> None:
+        """persist_discrepancies calls conn.execute with insert statement and discrepancy list."""
+        discrepancies = [
+            _sample_discrepancy("pi_001"),
+            _sample_discrepancy("pi_002", discrepancy_type="AMOUNT_MISMATCH"),
+        ]
+        mock_engine, mock_conn = _mock_engine_begin()
+
+        with patch(
+            "airflow.dags.nightly_reconciliation.create_engine",
+            return_value=mock_engine,
+        ):
+            result = dag_module.persist_discrepancies(discrepancies, ds="2026-03-28")
+
+        assert result == 2, f"Expected 2, got {result}"
+        assert mock_conn.execute.called, "conn.execute was not called"
+        # Verify execute was called once
+        assert mock_conn.execute.call_count == 1
+
+    def test_persist_discrepancies_returns_count(self) -> None:
+        """persist_discrepancies returns exact count of rows passed."""
+        discrepancies = [
+            _sample_discrepancy(f"pi_{i:03d}") for i in range(3)
+        ]
+        mock_engine, mock_conn = _mock_engine_begin()
+
+        with patch(
+            "airflow.dags.nightly_reconciliation.create_engine",
+            return_value=mock_engine,
+        ):
+            result = dag_module.persist_discrepancies(discrepancies, ds="2026-03-28")
+
+        assert result == 3, f"Expected 3, got {result}"
+
+    def test_persist_discrepancies_logs_written(self) -> None:
+        """persist_discrepancies logs persist_discrepancies_written event with count."""
+        discrepancies = [_sample_discrepancy("pi_log_001")]
+        mock_engine, _ = _mock_engine_begin()
+
+        log_events: list[dict] = []
+
+        def capture_log(event: str, **kwargs) -> None:
+            log_events.append({"event": event, **kwargs})
+
+        with (
+            patch(
+                "airflow.dags.nightly_reconciliation.create_engine",
+                return_value=mock_engine,
+            ),
+            patch.object(dag_module.logger, "info", side_effect=capture_log),
+        ):
+            dag_module.persist_discrepancies(discrepancies, ds="2026-03-28")
+
+        written_events = [e for e in log_events if e["event"] == "persist_discrepancies_written"]
+        assert len(written_events) == 1, f"Expected 1 persist_discrepancies_written log, got {written_events}"
+        assert written_events[0]["count"] == 1
+
+    def test_persist_discrepancies_skipped_logs(self) -> None:
+        """persist_discrepancies logs persist_discrepancies_skipped for empty list."""
+        log_events: list[dict] = []
+
+        def capture_log(event: str, **kwargs) -> None:
+            log_events.append({"event": event, **kwargs})
+
+        with (
+            patch("airflow.dags.nightly_reconciliation.create_engine"),
+            patch.object(dag_module.logger, "info", side_effect=capture_log),
+        ):
+            result = dag_module.persist_discrepancies([], ds="2026-03-28")
+
+        assert result == 0
+        skipped_events = [e for e in log_events if e["event"] == "persist_discrepancies_skipped"]
+        assert len(skipped_events) == 1, f"Expected 1 persist_discrepancies_skipped log, got {skipped_events}"
+
 
 # ---------------------------------------------------------------------------
 # DAG structure tests
@@ -464,6 +638,10 @@ class TestDagStructure(unittest.TestCase):
     def test_has_compare_and_publish_function(self) -> None:
         """Module exposes callable compare_and_publish."""
         assert callable(dag_module.compare_and_publish)
+
+    def test_has_persist_discrepancies_function(self) -> None:
+        """Module exposes callable persist_discrepancies."""
+        assert callable(dag_module.persist_discrepancies)
 
     def test_dag_id_constant_in_module(self) -> None:
         """nightly_reconciliation dag is defined with dag_id='nightly_reconciliation'."""
