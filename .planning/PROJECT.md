@@ -36,8 +36,9 @@ Every payment event is reliably ingested, deduplicated, scored for fraud risk, a
 - ✓ XGBoost ML risk scoring service (p99 < 100ms, fallback on Redis timeout) — v1.3
 - ✓ Double-entry financial ledger (append-only, DB trigger enforces balanced entries) — v1.4 — Validated in Phase 06: Financial Ledger
 - ✓ Apache Airflow nightly reconciliation DAG (detect_duplicates, fetch_stripe_window, compare_and_publish) — v1.5 — Validated in Phase 07: Reconciliation + Airflow
-- [ ] BigQuery + dbt transformation layer
-- [ ] Streamlit observability dashboard
+- ✓ BigQuery + dbt transformation layer — Validated in Phase 08: BigQuery + dbt
+- ✓ Streamlit observability dashboard — Validated in Phase 09: Dashboard + Monitoring
+- ✓ Feature replay engine (offline feature store, Parquet output, retrain path) — Validated in Phase 10: Feature Replay Engine
 - [ ] GCP deployment (Cloud Run, Cloud SQL, Cloud Memorystore)
 - [ ] GitHub Actions CI/CD pipeline
 
@@ -59,7 +60,9 @@ v1.3 shipped Phase 05 complete — ML risk scoring pipeline. 3 plans, 30 files c
 v1.4 shipped Phase 06 complete — Financial ledger. 2 plans, LedgerEntry + ManualReviewQueueEntry ORM models, Alembic migrations 002+003 (append-only + DEFERRABLE balance triggers), LedgerEntryProducer, ManualReviewRepository, ScoringConsumer wired for downstream routing, LedgerConsumer (DEBIT+CREDIT double-entry, SETTLED state transition, DLQ error handling), Dockerfile.ledger-consumer on port 8004. 128 unit tests passing. Human UAT pending live Docker stack (2026-03-27).
 v1.5 shipped Phase 07 complete — Reconciliation + Airflow. 3 plans, ReconciliationMessage model (D-11, 10 fields), ReconciliationProducer (backoff [1,2,4], publish_batch), nightly_reconciliation Airflow DAG (TaskFlow, @daily, detect_duplicates + fetch_stripe_window parallel → compare_and_publish), Airflow Docker services in docker-compose. 167 unit tests passing. Integration tests deferred (skip gracefully, run against live stack).
 
-Last updated: 2026-03-28
+Phase 10 complete — Feature Replay Engine: `replay/feature_reconstruction.py` produces training-ready 8-feature Parquet from PostgreSQL historical data. 20 tests (16 unit + 4 integration) all passing.
+
+Last updated: 2026-03-30
 
 ## Constraints
 
