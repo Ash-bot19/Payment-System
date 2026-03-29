@@ -103,9 +103,13 @@ Plans:
 
 #### Phase 10: Feature Replay Engine
 
-**Goal**: Replay historical events through the feature engineering pipeline to bootstrap the offline feature store and backfill ML training data.
+**Goal**: Reconstruct ML features from historical PostgreSQL data (payment_state_log + ledger_entries) and produce a training-ready Parquet dataset. Pure Python batch script — no Kafka, no Spark, no JVM.
 **Depends on**: Phase 8
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Feature reconstruction script (replay/feature_reconstruction.py) + unit tests (SQL queries, batch zscore, CLI args, Parquet output)
+- [ ] 10-02-PLAN.md — ml/train.py retrain docstring (D-17) + .gitignore + integration tests + human verification
 
 #### Phase 11: GCP Deploy + CI/CD
 
@@ -126,5 +130,5 @@ Plans:
 | 7. Reconciliation + Airflow | v1.4 | 3/3 | Complete   | 2026-03-27 |
 | 8. BigQuery + dbt | v2.0 | 2/3 | In Progress|  |
 | 9. Dashboard + Monitoring | v2.0 | 0/3 | Not started | - |
-| 10. Feature Replay Engine | v2.0 | 0/TBD | Not started | - |
+| 10. Feature Replay Engine | v2.0 | 0/2 | Not started | - |
 | 11. GCP Deploy + CI/CD | v2.0 | 0/TBD | Not started | - |
