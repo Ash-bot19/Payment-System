@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-29T20:07:50.548Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-29T20:15:39.758Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -58,6 +58,7 @@ Plan: 2 of 2
 | Phase 08-bigquery-dbt P01 | 4min | 2 tasks | 4 files |
 | Phase 08-bigquery-dbt P02 | 515 | 2 tasks | 19 files |
 | Phase 10-feature-replay-engine P01 | 3min | 2 tasks | 4 files |
+| Phase 10-feature-replay-engine P02 | 20 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 10-01]: device_switch_flag=0 always: device sequence not stored in PostgreSQL (D-09); reconstructing from cold storage not possible
 - [Phase 10-01]: Batch retrospective z-score (pandas groupby) not Welford: correct approach for historical data, no streaming state needed
 - [Phase 10-01]: SQL window functions for velocity: COUNT(*) OVER RANGE PRECEDING approximates live Spark windows without JVM dependency
+- [Phase 10-feature-replay-engine]: Docstring-only change to ml/train.py (D-17): zero code-path risk, retrain path discoverable without touching training logic
+- [Phase 10-feature-replay-engine]: add_logger_name removed from structlog config: PrintLogger in tests has no name attribute, causes AttributeError
 
 ### Pending Todos
 
@@ -136,6 +139,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:07:50.544Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-29T20:15:39.752Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None

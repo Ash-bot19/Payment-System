@@ -109,7 +109,7 @@ Plans:
 
 Plans:
 - [x] 10-01-PLAN.md — Feature reconstruction script (replay/feature_reconstruction.py) + unit tests (SQL queries, batch zscore, CLI args, Parquet output)
-- [ ] 10-02-PLAN.md — ml/train.py retrain docstring (D-17) + .gitignore + integration tests + human verification
+- [x] 10-02-PLAN.md — ml/train.py retrain docstring (D-17) + .gitignore + integration tests + human verification
 
 #### Phase 11: GCP Deploy + CI/CD
 
@@ -130,5 +130,5 @@ Plans:
 | 7. Reconciliation + Airflow | v1.4 | 3/3 | Complete   | 2026-03-27 |
 | 8. BigQuery + dbt | v2.0 | 2/3 | In Progress|  |
 | 9. Dashboard + Monitoring | v2.0 | 0/3 | Not started | - |
-| 10. Feature Replay Engine | v2.0 | 1/2 | In Progress|  |
+| 10. Feature Replay Engine | v2.0 | 2/2 | Complete   | 2026-03-29 |
 | 11. GCP Deploy + CI/CD | v2.0 | 0/TBD | Not started | - |
