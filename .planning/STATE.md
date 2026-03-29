@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-28T09:42:51.644Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-29T20:07:50.548Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 08 — bigquery-dbt
+**Current focus:** Phase 10 — feature-replay-engine
 
 ## Current Position
 
-Phase: 08
-Plan: 01 complete, 02 next
+Phase: 10 (feature-replay-engine) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 01 complete, 02 next
 | Phase 07-reconciliation-airflow P03 | 5min | 3 tasks | 6 files |
 | Phase 08-bigquery-dbt P01 | 4min | 2 tasks | 4 files |
 | Phase 08-bigquery-dbt P02 | 515 | 2 tasks | 19 files |
+| Phase 10-feature-replay-engine P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 08-bigquery-dbt]: dbt dev profile uses dbt-postgres against docker-compose PostgreSQL; prod profile is bigquery placeholder for Phase 11
 - [Phase 08-bigquery-dbt]: DISTINCT ON used in stg_transactions for dev; ROW_NUMBER() alternative documented for Phase 11 BigQuery migration
 - [Phase 08-bigquery-dbt]: dbt-bigquery excluded from requirements.txt — large GCP deps deferred to Phase 11
+- [Phase 10-01]: device_switch_flag=0 always: device sequence not stored in PostgreSQL (D-09); reconstructing from cold storage not possible
+- [Phase 10-01]: Batch retrospective z-score (pandas groupby) not Welford: correct approach for historical data, no streaming state needed
+- [Phase 10-01]: SQL window functions for velocity: COUNT(*) OVER RANGE PRECEDING approximates live Spark windows without JVM dependency
 
 ### Pending Todos
 
@@ -132,6 +136,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T09:42:51.637Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-03-29T20:07:50.544Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None
