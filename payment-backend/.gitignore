@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.env
+.venv/
+*.log
+
+# Generated feature store Parquet files (Phase 10)
+data/feature_store/

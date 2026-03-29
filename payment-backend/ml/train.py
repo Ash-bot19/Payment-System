@@ -10,6 +10,18 @@ Usage (from payment-backend/):
 Output:
     ml/models/model.ubj  -- Pre-trained XGBoost binary model (UBJ format)
     AUC printed to verify model quality.
+
+Retraining with real data:
+    Once replay/feature_reconstruction.py has produced a Parquet file:
+
+        import pandas as pd
+        df = pd.read_parquet('data/feature_store/features_YYYYMMDD.parquet')
+        X = df[FEATURE_NAMES].values
+
+    NOTE: The Parquet file does NOT include a 'label' column. Ground-truth
+    fraud labels must be obtained separately (e.g., chargeback data, manual
+    review outcomes) before supervised retraining is possible. See D-18
+    in .planning/phases/10-feature-replay-engine/10-CONTEXT.md for details.
 """
 
 import os
