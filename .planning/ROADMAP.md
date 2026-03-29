@@ -130,5 +130,5 @@ Plans:
 | 7. Reconciliation + Airflow | v1.4 | 3/3 | Complete   | 2026-03-27 |
 | 8. BigQuery + dbt | v2.0 | 2/3 | In Progress|  |
 | 9. Dashboard + Monitoring | v2.0 | 0/3 | Not started | - |
-| 10. Feature Replay Engine | v2.0 | 2/2 | Complete   | 2026-03-29 |
+| 10. Feature Replay Engine | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 11. GCP Deploy + CI/CD | v2.0 | 0/TBD | Not started | - |
