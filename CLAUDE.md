@@ -172,7 +172,14 @@ M7: BigQuery + dbt — DONE 2026-03-28 (GSD milestone: v2.0 — Phase 8)
   ✅ 175 unit tests + 28 dbt tests (reported separately) — all passing
   ✅ Human UAT passed 2026-03-28: migration 004 applied, dbt debug OK, dbt run 10/10 models, dbt test 28/28 pass (assert_ledger_balanced ✓), 5/5 integration + 5/5 E2E tests pass
   ✅ Bug fixed: nightly_reconciliation.py DATABASE_URL_SYNC defaults to @postgres (Docker hostname) — run integration tests from host with DATABASE_URL_SYNC=postgresql://payment:payment@localhost:5432/payment_db
-M8: Dashboard + Monitoring — TODO
+M8: Dashboard + Monitoring — DONE 2026-03-29
+  ✅ Phase 9: Dashboard + Monitoring — DONE 2026-03-29
+      - 09-01: seed_demo_data.py (15 txns, 68 state rows, 16 ledger rows, 5 discrepancies) + prometheus.yml ml-scoring-service target + ml_service.py Instrumentator + Grafana provisioning (datasource YAML + 2 alert rules JSON)
+      - 09-02: Streamlit dashboard (4 pages: Fraud Metrics, Payment Volume, Merchant Performance, Reconciliation) + queries module + Dockerfile (PYTHONPATH=/app) + docker-compose streamlit-dashboard service port 8501 + 6 unit tests
+      - 09-03: 6 E2E tests (Streamlit health + page load, Prometheus targets, Grafana datasource + alert rules) — all passing against live stack
+  ✅ 175 unit + 1 skipped (dashboard, needs streamlit in venv) + 6 E2E passing
+  ✅ Human UAT passed 2026-03-29: Streamlit at :8501 shows 4 pages with data, Prometheus shows both targets UP, Grafana has WebhookErrorRate + MLScoringLatencyP99 alert rules
+  ✅ Bugs fixed: Grafana mount path (../monitoring/grafana → ../monitoring/grafana/provisioning); datasource must be .yaml not .json; alert folder "General" conflicts with Grafana reserved folder → renamed to "Payment System"; st.Page paths relative to app.py dir not CWD; PYTHONPATH=/app needed for dashboard package imports
 M9: Feature Replay Engine — TODO
 M10: GCP Deploy + CI/CD — TODO
 
@@ -206,6 +213,13 @@ If Airflow DB gets into a partial migration state (e.g. after sqlalchemy version
 nightly_reconciliation.py DATABASE_URL_SYNC defaults to @postgres (Docker hostname for Airflow containers) — when running integration tests from host machine, override: `DATABASE_URL_SYNC=postgresql://payment:payment@localhost:5432/payment_db pytest ...`
 Alembic version mismatch after Airflow run: Airflow writes its own hash-based alembic_version; fix with `docker exec postgres psql -U payment -d payment_db -c "UPDATE alembic_version SET version_num = '003';"` then re-run upgrade
 dbt must be installed in .venv via pip: `pip install dbt-core==1.8.9 dbt-postgres==1.8.2` — not in requirements.txt by default for Docker builds (only needed for local dev + tests)
+
+Grafana datasource provisioning requires .yaml extension — .json files are silently ignored for datasources (alerting provisioning accepts .json)
+Grafana alert rules: do NOT use "folder": "General" — it's Grafana's reserved root folder and causes a startup crash; use a unique name like "Payment System"
+Grafana provisioning mount: must be ../monitoring/grafana/provisioning:/etc/grafana/provisioning (not ../monitoring/grafana) — one extra level
+Streamlit st.Page() paths are relative to app.py's directory, not the CWD where streamlit run is invoked
+Streamlit Docker: set ENV PYTHONPATH=/app so page scripts can import the dashboard package — Streamlit adds the app.py dir to sys.path, not WORKDIR
+Grafana MCP server: URL must have no trailing space — "http://localhost:3000 " (with space) causes a panic on startup
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget

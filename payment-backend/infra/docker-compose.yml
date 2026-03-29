@@ -105,6 +105,7 @@ services:
       - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     depends_on:
       - webhook-service
+      - ml-scoring-service
 
   # ─── Grafana ──────────────────────────────────────────────────────────────────
   grafana:
@@ -116,7 +117,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
-      - ../monitoring/grafana:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     depends_on:
       - prometheus
 
@@ -350,6 +351,28 @@ services:
         condition: service_completed_successfully
       kafka:
         condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Streamlit observability dashboard (port 8501) ────────────────────────────
+  streamlit-dashboard:
+    build:
+      context: ..
+      dockerfile: dashboard/Dockerfile
+    container_name: streamlit-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - DATABASE_URL=postgresql://payment:payment@postgres:5432/payment_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0 --server.runOnSave true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     restart: unless-stopped
 
 volumes:

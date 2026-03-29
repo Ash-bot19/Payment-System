@@ -19,6 +19,7 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 from prometheus_client import Counter, make_asgi_app
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from ml.scorer import XGBoostScorer
 from models.ml_scoring import FeatureVector, RiskScore
@@ -59,6 +60,9 @@ app = FastAPI(
 # Mount Prometheus metrics at /metrics
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
+
+# Instrument app for HTTP request duration histograms (histogram_quantile Grafana alerts)
+Instrumentator().instrument(app)
 
 
 @app.get("/health")

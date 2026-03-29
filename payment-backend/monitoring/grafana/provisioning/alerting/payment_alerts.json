@@ -1,0 +1,103 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "payment_system_alerts",
+      "folder": "Payment System",
+      "interval": "60s",
+      "rules": [
+        {
+          "uid": "webhook_error_rate_alert",
+          "title": "WebhookErrorRate",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "prometheus",
+              "relativeTimeRange": { "from": 600, "to": 0 },
+              "model": {
+                "expr": "rate(http_requests_total{job=\"webhook-service\",status=~\"5..\"}[5m]) / rate(http_requests_total{job=\"webhook-service\"}[5m])",
+                "refId": "A",
+                "interval": ""
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": { "params": [0.01], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["A"] },
+                    "reducer": { "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "datasource": { "type": "__expr__", "uid": "__expr__" },
+                "expression": "",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "B",
+                "type": "classic_conditions"
+              }
+            }
+          ],
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "5m",
+          "annotations": {
+            "description": "Webhook service 5xx error rate exceeds 1% over 5 minutes"
+          },
+          "labels": { "severity": "warning", "team": "platform" }
+        },
+        {
+          "uid": "ml_p99_latency_alert",
+          "title": "MLScoringLatencyP99",
+          "condition": "B",
+          "data": [
+            {
+              "refId": "A",
+              "datasourceUid": "prometheus",
+              "relativeTimeRange": { "from": 600, "to": 0 },
+              "model": {
+                "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"ml-scoring-service\"}[5m]))",
+                "refId": "A",
+                "interval": ""
+              }
+            },
+            {
+              "refId": "B",
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": { "params": [0.2], "type": "gt" },
+                    "operator": { "type": "and" },
+                    "query": { "params": ["A"] },
+                    "reducer": { "type": "last" },
+                    "type": "query"
+                  }
+                ],
+                "datasource": { "type": "__expr__", "uid": "__expr__" },
+                "expression": "",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "B",
+                "type": "classic_conditions"
+              }
+            }
+          ],
+          "noDataState": "NoData",
+          "execErrState": "Alerting",
+          "for": "5m",
+          "annotations": {
+            "description": "ML scoring service p99 latency exceeds 200ms (2x SLA of 100ms)"
+          },
+          "labels": { "severity": "warning", "team": "platform" }
+        }
+      ]
+    }
+  ]
+}
