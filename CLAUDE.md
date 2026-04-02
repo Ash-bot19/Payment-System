@@ -189,7 +189,28 @@ M9: Feature Replay Engine — DONE 2026-03-30 (Phase 10)
   ✅ ml/train.py docstring updated with Parquet retrain path (D-17); .gitignore excludes data/feature_store/
   ✅ 20 tests: 16 unit + 4 integration (all pass; integration skips gracefully without PostgreSQL)
   ✅ Feature Fidelity Notes docstring documents all approximations and device_switch_flag gap (portfolio signal)
-M10: GCP Deploy + CI/CD — TODO
+M10: GCP Deploy + CI/CD — IN PROGRESS (Phase 11, session 2026-04-03)
+  ✅ 11-01: GCP Infra provisioned — Artifact Registry, Cloud SQL (172.31.0.3), Memorystore (10.101.168.91), GCS bucket, BigQuery dataset, Secret Manager (7 secrets)
+  ✅ 11-02: VM kafka-vm (e2-standard-2, asia-south1-a, 10.160.0.2) + docker-compose for all 7 services + Cloud Build configs for 7 Docker images
+  ✅ 11-03: 3 Cloud Run services deployed
+       webhook-service:    https://webhook-service-uuxwmvlyea-el.a.run.app
+       ml-scoring-service: https://ml-scoring-service-uuxwmvlyea-el.a.run.app
+       streamlit-dashboard: https://streamlit-dashboard-94891977471.asia-south1.run.app
+       Workload Identity Federation configured (no SA key needed)
+       GitHub Actions SA: github-actions-sa@project-2f9d2775-493e-4e59-9b8.iam.gserviceaccount.com
+  ✅ 11-04: export_to_bigquery implemented (google-cloud-bigquery==3.25.0) — Cloud Run Job + Cloud Scheduler NOT YET deployed (needs GCP commands next session)
+  ✅ 11-05: .github/workflows/ci-cd.yml written (WIF auth, 4 jobs: test→build→staging→production) — GitHub secrets NOT YET set
+  ✅ 11-06: send_webhook_events.py written — ready to run against live URL
+
+  ⏳ NEXT SESSION — manual GCP steps required (see "Next Session Checklist" below):
+    1. Re-provision: start VM + Cloud SQL, recreate Memorystore (stopped to save billing)
+    2. Run Alembic migrations via IAP tunnel
+    3. Build + push Airflow image → deploy Cloud Run Job + Cloud Scheduler
+    4. Set 5 GitHub secrets + create staging/production environments
+    5. Run E2E: send_webhook_events.py → verify all 9 pipeline steps → teardown
+
+  GCP Project: project-2f9d2775-493e-4e59-9b8 | Region: asia-south1
+  AR repo: asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system
 
 ## Known Gotchas
 ADD TO THIS AS YOU DISCOVER ISSUES. This is the most valuable section over time.
@@ -229,6 +250,97 @@ Streamlit st.Page() paths are relative to app.py's directory, not the CWD where 
 Streamlit Docker: set ENV PYTHONPATH=/app so page scripts can import the dashboard package — Streamlit adds the app.py dir to sys.path, not WORKDIR
 Grafana MCP server: URL must have no trailing space — "http://localhost:3000 " (with space) causes a panic on startup
 structlog.stdlib.add_logger_name processor requires a stdlib-backed logger — incompatible with structlog's default PrintLogger; remove it from processors list when using structlog.configure() without wrapper_class=stdlib
+
+## Next Session Checklist (M10 E2E — Phase 11-06)
+Run these commands in order. All require `gcloud` auth.
+
+### Step 0 — Re-provision stopped services
+```bash
+# Start VM (was stopped to save billing)
+gcloud compute instances start kafka-vm --zone=asia-south1-a --project=project-2f9d2775-493e-4e59-9b8
+
+# Start Cloud SQL (was stopped to save billing)
+gcloud sql instances patch payment-db --activation-policy=ALWAYS --project=project-2f9d2775-493e-4e59-9b8
+
+# Recreate Memorystore Redis (was deleted — takes ~5 min)
+gcloud redis instances create payment-redis \
+  --size=1 --region=asia-south1 --redis-version=redis_7_0 \
+  --network=default --tier=basic \
+  --project=project-2f9d2775-493e-4e59-9b8
+```
+Then update Secret Manager with the new Redis host:
+```bash
+REDIS_HOST=$(gcloud redis instances describe payment-redis --region=asia-south1 --project=project-2f9d2775-493e-4e59-9b8 --format="value(host)")
+echo -n "redis://$REDIS_HOST:6379" | gcloud secrets versions add REDIS_URL --data-file=- --project=project-2f9d2775-493e-4e59-9b8
+echo -n "$REDIS_HOST" | gcloud secrets versions add REDIS_HOST --data-file=- --project=project-2f9d2775-493e-4e59-9b8
+```
+
+### Step 1 — Alembic migrations (via IAP tunnel through kafka-vm)
+```bash
+gcloud compute ssh ubuntu@kafka-vm --zone=asia-south1-a --project=project-2f9d2775-493e-4e59-9b8 --tunnel-through-iap --quiet \
+  --command='docker exec validation-consumer bash -c "PYTHONPATH=/app DATABASE_URL_SYNC=postgresql://payment:payment@172.31.0.3:5432/payment_db alembic -c db/alembic.ini upgrade head"'
+```
+
+### Step 2 — Deploy Airflow Cloud Run Job + Cloud Scheduler
+```bash
+cd payment-backend
+docker build -f airflow/Dockerfile -t asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system/airflow-dag-runner:latest .
+docker push asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system/airflow-dag-runner:latest
+
+gcloud run jobs create nightly-reconciliation \
+  --image=asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system/airflow-dag-runner:latest \
+  --region=asia-south1 --project=project-2f9d2775-493e-4e59-9b8 \
+  --vpc-connector=payment-connector --vpc-egress=private-ranges-only \
+  --set-secrets="DATABASE_URL_SYNC=DATABASE_URL_SYNC:latest,STRIPE_API_KEY=STRIPE_API_KEY:latest" \
+  --set-env-vars="GCP_PROJECT_ID=project-2f9d2775-493e-4e59-9b8,BIGQUERY_DATASET=payment_analytics,KAFKA_BOOTSTRAP_SERVERS=placeholder,PYTHONPATH=/opt/airflow,GOOGLE_CLOUD_PROJECT=project-2f9d2775-493e-4e59-9b8" \
+  --command="python" \
+  --args="-c,from airflow.dags.nightly_reconciliation import detect_duplicates, fetch_stripe_window, compare_and_publish, persist_discrepancies, export_to_bigquery; import datetime; ds=datetime.date.today().isoformat(); duplicates=detect_duplicates(ds); intents=fetch_stripe_window(ds); msgs=compare_and_publish(intents, ds); persist_discrepancies(msgs, ds); export_to_bigquery(ds)" \
+  --memory=1Gi --cpu=1 --max-retries=1 --task-timeout=600s
+
+# Cloud Scheduler SA
+gcloud iam service-accounts create scheduler-sa --display-name="Cloud Scheduler SA" --project=project-2f9d2775-493e-4e59-9b8
+gcloud projects add-iam-policy-binding project-2f9d2775-493e-4e59-9b8 \
+  --member="serviceAccount:scheduler-sa@project-2f9d2775-493e-4e59-9b8.iam.gserviceaccount.com" \
+  --role="roles/run.invoker"
+
+gcloud scheduler jobs create http nightly-reconciliation-trigger \
+  --project=project-2f9d2775-493e-4e59-9b8 --location=asia-south1 \
+  --schedule="0 1 * * *" --time-zone="UTC" \
+  --uri="https://asia-south1-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/project-2f9d2775-493e-4e59-9b8/jobs/nightly-reconciliation:run" \
+  --http-method=POST \
+  --oauth-service-account-email="scheduler-sa@project-2f9d2775-493e-4e59-9b8.iam.gserviceaccount.com"
+```
+
+### Step 3 — Set GitHub secrets (browser)
+Go to: https://github.com/Ash-bot19/Payment-System/settings/secrets/actions
+Set these 5 secrets:
+- AR_REPO              = asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system
+- VM_INTERNAL_IP       = 10.160.0.2
+- GCP_PROJECT_ID       = project-2f9d2775-493e-4e59-9b8
+- STRIPE_WEBHOOK_SECRET = (from your .env file)
+- DATABASE_URL         = postgresql+asyncpg://payment:payment@localhost:5432/payment_db
+
+Create two Environments at: https://github.com/Ash-bot19/Payment-System/settings/environments
+- staging    — no approval required
+- production — require reviewer (yourself)
+
+### Step 4 — E2E demo (send events + verify pipeline)
+```bash
+WEBHOOK_URL="https://webhook-service-uuxwmvlyea-el.a.run.app"
+STRIPE_SECRET=$(gcloud secrets versions access latest --secret=STRIPE_WEBHOOK_SECRET --project=project-2f9d2775-493e-4e59-9b8)
+cd payment-backend
+python scripts/send_webhook_events.py --url "$WEBHOOK_URL" --secret "$STRIPE_SECRET" --count 75 --delay-ms 200
+```
+Then verify each of the 9 pipeline steps from 11-06-PLAN.md.
+
+### Step 5 — Final teardown (after E2E)
+```bash
+gcloud compute instances delete kafka-vm --zone=asia-south1-a --project=project-2f9d2775-493e-4e59-9b8 --quiet
+gcloud sql instances delete payment-db --project=project-2f9d2775-493e-4e59-9b8 --quiet
+gcloud redis instances delete payment-redis --region=asia-south1 --project=project-2f9d2775-493e-4e59-9b8 --quiet
+gcloud compute firewall-rules delete allow-kafka-internal --project=project-2f9d2775-493e-4e59-9b8 --quiet
+```
+Keep: Cloud Run, BigQuery, GCS, Artifact Registry, Secret Manager, Cloud Scheduler, WIF — all near-zero cost.
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget
