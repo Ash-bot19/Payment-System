@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-04-02T14:22:07.267Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-04-02T14:55:31.455Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 ## Current Position
 
 Phase: 11 (gcp-deploy-cicd) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Plan: 2 of 6
 | Phase 10-feature-replay-engine P01 | 3min | 2 tasks | 4 files |
 | Phase 10-feature-replay-engine P02 | 20 | 3 tasks | 4 files |
 | Phase 11-gcp-deploy-cicd P01 | 24 | 2 tasks | 2 files |
+| Phase 11-gcp-deploy-cicd P02 | 60 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,8 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 11-gcp-deploy-cicd]: VPC private peering on default network required for Cloud SQL private IP (D-12); google-managed-services-default /16 range created
 - [Phase 11-gcp-deploy-cicd]: vm-docker-compose.yml: no build:/env_file, uses image: from Artifact Registry, KAFKA_ADVERTISED_LISTENERS uses VM_INTERNAL_IP env var (D-11)
 - [Phase 11-gcp-deploy-cicd]: GCS replaces spark_checkpoints Docker volume: SPARK_CHECKPOINT_DIR=gs://payment-spark-checkpoints-1775139408/checkpoints (D-14)
+- [Phase 11-gcp-deploy-cicd]: VM internal IP 10.160.0.2: Plan 03 uses this as KAFKA_BOOTSTRAP_SERVERS value for all Cloud Run services
+- [Phase 11-gcp-deploy-cicd]: cloudbuild.yaml committed to repo: CI/CD Plan 11-05 references it for automated triggers without rewriting build logic
 
 ### Pending Todos
 
@@ -143,6 +146,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-02T14:22:07.263Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-04-02T14:55:31.450Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
