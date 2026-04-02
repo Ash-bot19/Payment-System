@@ -1,0 +1,141 @@
+substitutions:
+  _AR_REPO: asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system
+
+steps:
+  # 1. webhook-service
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.webhook
+      - -t
+      - ${_AR_REPO}/webhook-service:latest
+      - .
+    id: build-webhook
+
+  # 2. validation-consumer
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.validation
+      - -t
+      - ${_AR_REPO}/validation-consumer:latest
+      - .
+    id: build-validation
+
+  # 3. scoring-consumer
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.scoring-consumer
+      - -t
+      - ${_AR_REPO}/scoring-consumer:latest
+      - .
+    id: build-scoring
+
+  # 4. ml-scoring-service
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.ml-service
+      - -t
+      - ${_AR_REPO}/ml-scoring-service:latest
+      - .
+    id: build-ml-service
+
+  # 5. ledger-consumer
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - infra/Dockerfile.ledger-consumer
+      - -t
+      - ${_AR_REPO}/ledger-consumer:latest
+      - .
+    id: build-ledger
+
+  # 6. spark-feature-engine
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - spark/Dockerfile
+      - -t
+      - ${_AR_REPO}/spark-feature-engine:latest
+      - .
+    id: build-spark
+
+  # 7. streamlit-dashboard
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - dashboard/Dockerfile
+      - -t
+      - ${_AR_REPO}/streamlit-dashboard:latest
+      - .
+    id: build-dashboard
+
+  # Push steps (explicit, run after build steps)
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/webhook-service:latest
+    id: push-webhook
+    waitFor:
+      - build-webhook
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/validation-consumer:latest
+    id: push-validation
+    waitFor:
+      - build-validation
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/scoring-consumer:latest
+    id: push-scoring
+    waitFor:
+      - build-scoring
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/ml-scoring-service:latest
+    id: push-ml-service
+    waitFor:
+      - build-ml-service
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/ledger-consumer:latest
+    id: push-ledger
+    waitFor:
+      - build-ledger
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/spark-feature-engine:latest
+    id: push-spark
+    waitFor:
+      - build-spark
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_REPO}/streamlit-dashboard:latest
+    id: push-dashboard
+    waitFor:
+      - build-dashboard
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: GCS_ONLY
