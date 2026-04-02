@@ -118,7 +118,7 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — GCP infrastructure: Artifact Registry, billing alert, Cloud SQL, Memorystore, GCS bucket, Secret Manager (7 secrets), vm-docker-compose.yml
+- [x] 11-01-PLAN.md — GCP infrastructure: Artifact Registry, billing alert, Cloud SQL, Memorystore, GCS bucket, Secret Manager (7 secrets), vm-docker-compose.yml
 - [ ] 11-02-PLAN.md — Build + push 7 Docker images; provision e2-standard-2 VM; deploy Kafka + Zookeeper + Spark + 3 consumers
 - [ ] 11-03-PLAN.md — Cloud Run deploy: webhook-service (8000), ml-scoring-service (8001), streamlit-dashboard (8501); Alembic migrations; VPC connector
 - [ ] 11-04-PLAN.md — Implement export_to_bigquery stub; create BigQuery dataset; deploy Airflow as Cloud Run Job; Cloud Scheduler nightly trigger
@@ -139,4 +139,4 @@ Plans:
 | 8. BigQuery + dbt | v2.0 | 2/3 | In Progress|  |
 | 9. Dashboard + Monitoring | v2.0 | 0/3 | Not started | - |
 | 10. Feature Replay Engine | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 11. GCP Deploy + CI/CD | v2.0 | 0/6 | Not started | - |
+| 11. GCP Deploy + CI/CD | v2.0 | 1/6 | In Progress|  |

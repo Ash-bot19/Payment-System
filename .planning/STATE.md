@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ledger + Reconciliation
 status: unknown
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-03-29T20:19:13.369Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-04-02T14:22:07.267Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27 after v1.3 milestone complete)
 
 **Core value:** Every payment event is reliably ingested, deduplicated, scored for fraud risk, and recorded in an auditable double-entry ledger with no data loss.
-**Current focus:** Phase 10 — feature-replay-engine
+**Current focus:** Phase 11 — gcp-deploy-cicd
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
+Phase: 11 (gcp-deploy-cicd) — EXECUTING
+Plan: 2 of 6
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: Not started
 | Phase 08-bigquery-dbt P02 | 515 | 2 tasks | 19 files |
 | Phase 10-feature-replay-engine P01 | 3min | 2 tasks | 4 files |
 | Phase 10-feature-replay-engine P02 | 20 | 3 tasks | 4 files |
+| Phase 11-gcp-deploy-cicd P01 | 24 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Decisions affecting Phase 2 and Phase 3:
 - [Phase 10-01]: SQL window functions for velocity: COUNT(*) OVER RANGE PRECEDING approximates live Spark windows without JVM dependency
 - [Phase 10-feature-replay-engine]: Docstring-only change to ml/train.py (D-17): zero code-path risk, retrain path discoverable without touching training logic
 - [Phase 10-feature-replay-engine]: add_logger_name removed from structlog config: PrintLogger in tests has no name attribute, causes AttributeError
+- [Phase 11-gcp-deploy-cicd]: VPC private peering on default network required for Cloud SQL private IP (D-12); google-managed-services-default /16 range created
+- [Phase 11-gcp-deploy-cicd]: vm-docker-compose.yml: no build:/env_file, uses image: from Artifact Registry, KAFKA_ADVERTISED_LISTENERS uses VM_INTERNAL_IP env var (D-11)
+- [Phase 11-gcp-deploy-cicd]: GCS replaces spark_checkpoints Docker volume: SPARK_CHECKPOINT_DIR=gs://payment-spark-checkpoints-1775139408/checkpoints (D-14)
 
 ### Pending Todos
 
@@ -139,6 +143,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T20:15:39.752Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-04-02T14:22:07.263Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None
