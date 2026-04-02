@@ -348,38 +348,57 @@ def persist_discrepancies(
 
 
 @task()
-def export_to_bigquery(last_cursor: str | None = None) -> None:
-    """Export new ledger rows to BigQuery using created_at as incremental cursor.
+def export_to_bigquery(ds: str | None = None) -> int:
+    """Export reconciliation_discrepancies rows for the current run_date to BigQuery.
 
-    PHASE 11 IMPLEMENTATION — this task is a placeholder. It exits cleanly
-    when GCP_PROJECT_ID is not set, which is the case for all local dev runs.
+    Reads from PostgreSQL reconciliation_discrepancies table (populated by
+    persist_discrepancies) and appends to BigQuery
+    {GCP_PROJECT_ID}.{BIGQUERY_DATASET}.reconciliation_discrepancies.
 
-    Phase 11 implementation pattern:
-        from google.cloud import bigquery
-        import pandas as pd
-        engine = create_engine(DATABASE_URL_SYNC)
-        df = pd.read_sql(
-            "SELECT * FROM ledger_entries WHERE created_at > %(cursor)s",
-            engine,
-            params={"cursor": last_cursor or "1970-01-01"},
-        )
-        client = bigquery.Client(project=GCP_PROJECT_ID)
-        table_id = f"{GCP_PROJECT_ID}.{BIGQUERY_DATASET}.ledger_entries"
-        job = client.load_table_from_dataframe(
-            df, table_id,
-            job_config=bigquery.LoadJobConfig(write_disposition="WRITE_APPEND"),
-        )
-        job.result()  # wait for completion
+    Exits cleanly (returns 0) when GCP_PROJECT_ID is not set — safe for local dev.
+
+    Args:
+        ds: Airflow execution date string, e.g. '2026-03-27'.
+
+    Returns:
+        Count of rows exported to BigQuery.
     """
     if not GCP_PROJECT_ID:
         logger.info(
             "export_to_bigquery_skipped",
             reason="GCP_PROJECT_ID_not_set",
-            phase="11_prep",
+            run_date=ds,
         )
-        return
-    # TODO: Phase 11 — implement BQ export (see docstring for pattern)
-    logger.info("export_to_bigquery_called", gcp_project=GCP_PROJECT_ID)
+        return 0
+
+    import pandas as pd
+    from google.cloud import bigquery
+
+    engine = create_engine(DATABASE_URL_SYNC)
+    table_id = f"{GCP_PROJECT_ID}.{BIGQUERY_DATASET}.reconciliation_discrepancies"
+
+    df = pd.read_sql(
+        "SELECT * FROM reconciliation_discrepancies WHERE run_date = %(run_date)s",
+        engine,
+        params={"run_date": ds},
+    )
+
+    if df.empty:
+        logger.info("export_to_bigquery_skipped", reason="no_rows_for_date", run_date=ds)
+        return 0
+
+    client = bigquery.Client(project=GCP_PROJECT_ID)
+    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
+    job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    job.result()
+
+    logger.info(
+        "export_to_bigquery_complete",
+        rows=len(df),
+        table=table_id,
+        run_date=ds,
+    )
+    return len(df)
 
 
 @dag(
@@ -404,7 +423,7 @@ def nightly_reconciliation() -> None:
     stripe_data = fetch_stripe_window()
     discrepancy_list = compare_and_publish(stripe_data)
     persist_discrepancies(discrepancy_list)   # depends on compare_and_publish
-    export_to_bigquery()                      # independent — Phase 11 prep
+    export_to_bigquery()                      # independent — reads from DB by run_date
 
 
 nightly_reconciliation()

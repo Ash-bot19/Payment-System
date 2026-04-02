@@ -180,7 +180,15 @@ M8: Dashboard + Monitoring — DONE 2026-03-29
   ✅ 175 unit + 1 skipped (dashboard, needs streamlit in venv) + 6 E2E passing
   ✅ Human UAT passed 2026-03-29: Streamlit at :8501 shows 4 pages with data, Prometheus shows both targets UP, Grafana has WebhookErrorRate + MLScoringLatencyP99 alert rules
   ✅ Bugs fixed: Grafana mount path (../monitoring/grafana → ../monitoring/grafana/provisioning); datasource must be .yaml not .json; alert folder "General" conflicts with Grafana reserved folder → renamed to "Payment System"; st.Page paths relative to app.py dir not CWD; PYTHONPATH=/app needed for dashboard package imports
-M9: Feature Replay Engine — TODO
+M9: Feature Replay Engine — DONE 2026-03-30 (Phase 10)
+  ✅ replay/feature_reconstruction.py (457 lines) — reads payment_state_log + ledger_entries, reconstructs 8 ML features
+  ✅ SQL window functions for tx_velocity_1m/5m; batch retrospective z-score per merchant; device_switch_flag=0 (documented)
+  ✅ --start-date / --end-date CLI via argparse; structlog; psycopg2 matching seed_demo_data.py pattern
+  ✅ Redis merchant:risk:{merchant_id} lookup with 0.5 fallback when Redis unavailable
+  ✅ Outputs data/feature_store/features_YYYYMMDD.parquet (4 metadata + 8 feature cols, float64)
+  ✅ ml/train.py docstring updated with Parquet retrain path (D-17); .gitignore excludes data/feature_store/
+  ✅ 20 tests: 16 unit + 4 integration (all pass; integration skips gracefully without PostgreSQL)
+  ✅ Feature Fidelity Notes docstring documents all approximations and device_switch_flag gap (portfolio signal)
 M10: GCP Deploy + CI/CD — TODO
 
 ## Known Gotchas
@@ -220,6 +228,7 @@ Grafana provisioning mount: must be ../monitoring/grafana/provisioning:/etc/graf
 Streamlit st.Page() paths are relative to app.py's directory, not the CWD where streamlit run is invoked
 Streamlit Docker: set ENV PYTHONPATH=/app so page scripts can import the dashboard package — Streamlit adds the app.py dir to sys.path, not WORKDIR
 Grafana MCP server: URL must have no trailing space — "http://localhost:3000 " (with space) causes a panic on startup
+structlog.stdlib.add_logger_name processor requires a stdlib-backed logger — incompatible with structlog's default PrintLogger; remove it from processors list when using structlog.configure() without wrapper_class=stdlib
 
 ## Session Protocol
 Start: run /status in Claude Code to check budget

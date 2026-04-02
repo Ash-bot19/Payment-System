@@ -1,0 +1,225 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  PROJECT_ID: project-2f9d2775-493e-4e59-9b8
+  REGION: asia-south1
+  AR_REPO: ${{ secrets.AR_REPO }}
+  WIF_PROVIDER: projects/94891977471/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  WIF_SA: github-actions-sa@project-2f9d2775-493e-4e59-9b8.iam.gserviceaccount.com
+
+jobs:
+  # ── Job 1: Build + Test ──────────────────────────────────────────────────────
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: payment
+          POSTGRES_PASSWORD: payment
+          POSTGRES_DB: payment_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        working-directory: payment-backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        working-directory: payment-backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_SYNC: postgresql://payment:payment@localhost:5432/payment_db
+          REDIS_URL: redis://localhost:6379/0
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          ML_MODEL_PATH: ml/models/model.ubj
+          GCP_PROJECT_ID: ""
+          ENVIRONMENT: test
+        run: |
+          pytest tests/unit/ -x --timeout=60 -q
+
+      - name: Set image tag
+        id: tag
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    outputs:
+      sha_short: ${{ steps.tag.outputs.sha_short }}
+
+  # ── Job 2: Push Docker Images ─────────────────────────────────────────────────
+  push-images:
+    name: Push Docker Images
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      - name: Build and push webhook-service
+        working-directory: payment-backend
+        run: |
+          docker build -f infra/Dockerfile.webhook \
+            -t ${{ env.AR_REPO }}/webhook-service:${{ needs.build-and-test.outputs.sha_short }} \
+            -t ${{ env.AR_REPO }}/webhook-service:latest \
+            .
+          docker push ${{ env.AR_REPO }}/webhook-service:${{ needs.build-and-test.outputs.sha_short }}
+          docker push ${{ env.AR_REPO }}/webhook-service:latest
+
+      - name: Build and push ml-scoring-service
+        working-directory: payment-backend
+        run: |
+          docker build -f infra/Dockerfile.ml-service \
+            -t ${{ env.AR_REPO }}/ml-scoring-service:${{ needs.build-and-test.outputs.sha_short }} \
+            -t ${{ env.AR_REPO }}/ml-scoring-service:latest \
+            .
+          docker push ${{ env.AR_REPO }}/ml-scoring-service:${{ needs.build-and-test.outputs.sha_short }}
+          docker push ${{ env.AR_REPO }}/ml-scoring-service:latest
+
+      - name: Build and push streamlit-dashboard
+        working-directory: payment-backend
+        run: |
+          docker build -f dashboard/Dockerfile \
+            -t ${{ env.AR_REPO }}/streamlit-dashboard:${{ needs.build-and-test.outputs.sha_short }} \
+            -t ${{ env.AR_REPO }}/streamlit-dashboard:latest \
+            .
+          docker push ${{ env.AR_REPO }}/streamlit-dashboard:${{ needs.build-and-test.outputs.sha_short }}
+          docker push ${{ env.AR_REPO }}/streamlit-dashboard:latest
+
+  # ── Job 3: Deploy to Staging (auto) ──────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-test, push-images]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy webhook-service to staging
+        run: |
+          gcloud run deploy webhook-service-staging \
+            --image=${{ env.AR_REPO }}/webhook-service:${{ needs.build-and-test.outputs.sha_short }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --set-env-vars="KAFKA_BOOTSTRAP_SERVERS=${{ secrets.VM_INTERNAL_IP }}:9092,ENVIRONMENT=staging,LOG_LEVEL=INFO,DEFAULT_MERCHANT_ID=test_merchant" \
+            --set-secrets="STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest,STRIPE_API_KEY=STRIPE_API_KEY:latest,DATABASE_URL=DATABASE_URL:latest,REDIS_URL=REDIS_URL:latest" \
+            --quiet
+
+      - name: Deploy ml-scoring-service to staging
+        run: |
+          gcloud run deploy ml-scoring-service-staging \
+            --image=${{ env.AR_REPO }}/ml-scoring-service:${{ needs.build-and-test.outputs.sha_short }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --set-env-vars="KAFKA_BOOTSTRAP_SERVERS=${{ secrets.VM_INTERNAL_IP }}:9092,ENVIRONMENT=staging,LOG_LEVEL=INFO" \
+            --set-secrets="REDIS_URL=REDIS_URL:latest" \
+            --quiet
+
+  # ── Job 4: Deploy to Production (manual gate) ─────────────────────────────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-test, push-images, deploy-staging]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy webhook-service to production
+        run: |
+          gcloud run deploy webhook-service \
+            --image=${{ env.AR_REPO }}/webhook-service:${{ needs.build-and-test.outputs.sha_short }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --set-env-vars="KAFKA_BOOTSTRAP_SERVERS=${{ secrets.VM_INTERNAL_IP }}:9092,ENVIRONMENT=production,LOG_LEVEL=INFO,DEFAULT_MERCHANT_ID=test_merchant" \
+            --set-secrets="STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest,STRIPE_API_KEY=STRIPE_API_KEY:latest,DATABASE_URL=DATABASE_URL:latest,REDIS_URL=REDIS_URL:latest" \
+            --quiet
+
+      - name: Deploy ml-scoring-service to production
+        run: |
+          gcloud run deploy ml-scoring-service \
+            --image=${{ env.AR_REPO }}/ml-scoring-service:${{ needs.build-and-test.outputs.sha_short }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --set-env-vars="KAFKA_BOOTSTRAP_SERVERS=${{ secrets.VM_INTERNAL_IP }}:9092,ENVIRONMENT=production,LOG_LEVEL=INFO" \
+            --set-secrets="REDIS_URL=REDIS_URL:latest" \
+            --quiet
+
+      - name: Deploy streamlit-dashboard to production
+        run: |
+          gcloud run deploy streamlit-dashboard \
+            --image=${{ env.AR_REPO }}/streamlit-dashboard:${{ needs.build-and-test.outputs.sha_short }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --platform=managed \
+            --set-env-vars="ENVIRONMENT=production,PYTHONPATH=/app" \
+            --set-secrets="DATABASE_URL=DATABASE_URL:latest" \
+            --quiet
