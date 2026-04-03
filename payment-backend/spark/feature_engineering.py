@@ -74,7 +74,7 @@ def validate_env():
     checkpoint_dir = os.getenv("SPARK_CHECKPOINT_DIR", "")
     if not checkpoint_dir:
         raise RuntimeError("SPARK_CHECKPOINT_DIR env var is required but not set")
-    if not os.path.exists(checkpoint_dir):
+    if not checkpoint_dir.startswith("gs://") and not os.path.exists(checkpoint_dir):
         raise RuntimeError(
             f"Checkpoint dir not found: {checkpoint_dir}. Check SPARK_CHECKPOINT_DIR."
         )

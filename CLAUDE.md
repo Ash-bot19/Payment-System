@@ -198,16 +198,19 @@ M10: GCP Deploy + CI/CD — IN PROGRESS (Phase 11, session 2026-04-03)
        streamlit-dashboard: https://streamlit-dashboard-94891977471.asia-south1.run.app
        Workload Identity Federation configured (no SA key needed)
        GitHub Actions SA: github-actions-sa@project-2f9d2775-493e-4e59-9b8.iam.gserviceaccount.com
-  ✅ 11-04: export_to_bigquery implemented (google-cloud-bigquery==3.25.0) — Cloud Run Job + Cloud Scheduler NOT YET deployed (needs GCP commands next session)
-  ✅ 11-05: .github/workflows/ci-cd.yml written (WIF auth, 4 jobs: test→build→staging→production) — GitHub secrets NOT YET set
-  ✅ 11-06: send_webhook_events.py written — ready to run against live URL
+  ✅ 11-04: export_to_bigquery implemented — Cloud Run Job (nightly-reconciliation) deployed + updated. Cloud Scheduler SKIPPED (manual trigger only via `gcloud run jobs execute`)
+  ✅ 11-05: GitHub repo secrets set (AR_REPO, VM_INTERNAL_IP, GCP_PROJECT_ID, STRIPE_WEBHOOK_SECRET, DATABASE_URL). Environments staging+production created.
+  ✅ 11-06: E2E COMPLETED 2026-04-04 — 75/75 events accepted, 210 state transitions (INITIATED→VALIDATED→SCORING→FLAGGED), 170 manual_review_queue entries, Spark writing all 8 feat:* keys to Redis
+  ✅ 4 bugs fixed during E2E run (see Known Gotchas)
 
-  ⏳ NEXT SESSION — manual GCP steps required (see "Next Session Checklist" below):
-    1. Re-provision: start VM + Cloud SQL, recreate Memorystore (stopped to save billing)
-    2. Run Alembic migrations via IAP tunnel
-    3. Build + push Airflow image → deploy Cloud Run Job + Cloud Scheduler
-    4. Set 5 GitHub secrets + create staging/production environments
-    5. Run E2E: send_webhook_events.py → verify all 9 pipeline steps → teardown
+  ⏳ NEXT SESSION — Loom recording + docs:
+    1. Commit bug fixes (4 files changed — see git diff)
+    2. Record Loom demo (see memory/project_loom_demo.md for script)
+    3. Start teardown: delete VM + Cloud SQL + Memorystore + firewall rule
+    4. Open fresh session for milestone-doc + phase-doc (errors + GCP commands explained)
+    5. Mark M10 DONE
+
+  NOTE: Stripe is invite-only in India — used self-generated HMAC secrets instead. All pipeline stages verified working.
 
   GCP Project: project-2f9d2775-493e-4e59-9b8 | Region: asia-south1
   AR repo: asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system
@@ -250,6 +253,13 @@ Streamlit st.Page() paths are relative to app.py's directory, not the CWD where 
 Streamlit Docker: set ENV PYTHONPATH=/app so page scripts can import the dashboard package — Streamlit adds the app.py dir to sys.path, not WORKDIR
 Grafana MCP server: URL must have no trailing space — "http://localhost:3000 " (with space) causes a panic on startup
 structlog.stdlib.add_logger_name processor requires a stdlib-backed logger — incompatible with structlog's default PrintLogger; remove it from processors list when using structlog.configure() without wrapper_class=stdlib
+enable.auto.offset.store=False was only applied to ledger_consumer in M5 — validation_consumer and scoring_consumer were missing it, causing KafkaError _INVALID_ARG on store_offsets() — apply to ALL consumers using store_offsets()
+send_webhook_events.py: do NOT strip whsec_ prefix before HMAC signing — Stripe SDK uses the full secret string (including whsec_) as the HMAC key
+Spark validate_env() uses os.path.exists() which always returns False for gs:// paths — skip the check for GCS URIs (startswith "gs://")
+Spark checkpoint on GCS requires hadoop-gcs connector JAR in the image — if JAR is missing, use a local volume mount instead (SPARK_CHECKPOINT_DIR=/tmp/spark-checkpoints with volumes: spark_checkpoints:/tmp/spark-checkpoints)
+feat:{event_id} Redis keys are written by Spark 10s after event arrival but scoring consumer checks within 150ms — features will always be unavailable in real-time; fallback to manual_review=True is the correct designed behavior
+Stripe is invite-only in India — use self-generated HMAC secrets (python -c "import secrets; print('whsec_' + secrets.token_hex(32))") for test deployments
+VM docker-compose.yml is at /home/ubuntu/docker-compose.yml (NOT ~/payment-backend/docker-compose.yml)
 
 ## Next Session Checklist (M10 E2E — Phase 11-06)
 Run these commands in order. All require `gcloud` auth.

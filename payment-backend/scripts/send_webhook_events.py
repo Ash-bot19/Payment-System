@@ -89,11 +89,8 @@ def sign_payload(payload_bytes: bytes, secret: str) -> str:
     timestamp = int(time.time())
     signed_string = f"{timestamp}.{payload_bytes.decode('utf-8')}"
 
-    # Strip whsec_ prefix if present — Stripe SDK does this internally too
-    raw_secret = secret.removeprefix("whsec_")
-
     mac = hmac.new(
-        raw_secret.encode("utf-8"),
+        secret.encode("utf-8"),
         signed_string.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()

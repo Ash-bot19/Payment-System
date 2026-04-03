@@ -76,6 +76,7 @@ class ValidationConsumer:
             "bootstrap.servers": bootstrap_servers,
             "group.id": CONSUMER_GROUP,
             "enable.auto.commit": False,
+            "enable.auto.offset.store": False,
             "auto.offset.reset": "earliest",
         })
         self._dlq_producer = DLQProducer(bootstrap_servers)
