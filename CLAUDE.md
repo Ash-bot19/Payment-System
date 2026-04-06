@@ -204,16 +204,44 @@ M10: GCP Deploy + CI/CD — IN PROGRESS (Phase 11, session 2026-04-03)
   ✅ 4 bugs fixed during E2E run (see Known Gotchas)
 
   ⏳ NEXT SESSION — Loom recording + docs:
-    1. Commit bug fixes (4 files changed — see git diff)
-    2. Record Loom demo (see memory/project_loom_demo.md for script)
-    3. Start teardown: delete VM + Cloud SQL + Memorystore + firewall rule
-    4. Open fresh session for milestone-doc + phase-doc (errors + GCP commands explained)
-    5. Mark M10 DONE
+    1. ✅ Bug fixes already committed (28b2666)
+    2. ✅ GCP Command Reference subpage created in Notion Build Log
+    3. Re-provision stopped services (VM + Cloud SQL + Memorystore) — see memory/project_loom_demo.md
+    4. Dry-run pipeline (10 events off camera), then record Loom (20 events, --delay-ms 500)
+    5. Teardown billable resources after recording
+    6. Write milestone-doc (M10 errors + fixes) + phase-doc (Phase 11 gcloud commands explained)
+    7. Mark M10 DONE + /gsd:complete-milestone
 
   NOTE: Stripe is invite-only in India — used self-generated HMAC secrets instead. All pipeline stages verified working.
 
   GCP Project: project-2f9d2775-493e-4e59-9b8 | Region: asia-south1
   AR repo: asia-south1-docker.pkg.dev/project-2f9d2775-493e-4e59-9b8/payment-system
+
+## Live URLs (GCP Production)
+
+### Cloud Run Services
+| Service | URL |
+|---|---|
+| Webhook service root | https://webhook-service-uuxwmvlyea-el.a.run.app/ |
+| Webhook health | https://webhook-service-uuxwmvlyea-el.a.run.app/health |
+| Webhook Swagger UI | https://webhook-service-uuxwmvlyea-el.a.run.app/docs |
+| ML scoring root | https://ml-scoring-service-94891977471.asia-south1.run.app/ |
+| ML scoring health | https://ml-scoring-service-94891977471.asia-south1.run.app/health |
+| ML scoring Swagger UI | https://ml-scoring-service-94891977471.asia-south1.run.app/docs |
+| Streamlit dashboard | https://streamlit-dashboard-94891977471.asia-south1.run.app |
+
+### GCP Console
+| Resource | URL |
+|---|---|
+| Cloud Run services | https://console.cloud.google.com/run?project=project-2f9d2775-493e-4e59-9b8 |
+| BigQuery | https://console.cloud.google.com/bigquery?project=project-2f9d2775-493e-4e59-9b8 |
+| Artifact Registry | https://console.cloud.google.com/artifacts?project=project-2f9d2775-493e-4e59-9b8 |
+
+### GitHub
+| Resource | URL |
+|---|---|
+| Repo | https://github.com/Ash-bot19/Payment-System |
+| Actions / CI-CD | https://github.com/Ash-bot19/Payment-System/actions |
 
 ## Known Gotchas
 ADD TO THIS AS YOU DISCOVER ISSUES. This is the most valuable section over time.
