@@ -65,6 +65,11 @@ app.mount("/metrics", metrics_app)
 Instrumentator().instrument(app)
 
 
+@app.get("/")
+def root() -> dict:
+    return {"service": "ml-scoring-service", "version": "1.0.0"}
+
+
 @app.get("/health")
 def health() -> dict:
     """Liveness probe. Reports model load status."""

@@ -13,6 +13,10 @@ def get_connection():
     url = os.environ.get(
         "DATABASE_URL", "postgresql://payment:payment@localhost:5432/payment_db"
     )
+    # Strip SQLAlchemy driver specifier (e.g. postgresql+asyncpg:// → postgresql://)
+    # The DATABASE_URL secret is shared with FastAPI which needs the +asyncpg dialect.
+    if "+" in url.split("://")[0]:
+        url = "postgresql://" + url.split("://", 1)[1]
     conn = psycopg2.connect(url)
     conn.autocommit = True  # dashboard is read-only
     logger.info("dashboard_db_connected", url=url.split("@")[1])  # log host only, not creds

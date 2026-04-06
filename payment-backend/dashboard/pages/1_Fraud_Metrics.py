@@ -1,4 +1,12 @@
+import os
+import sys
+
 import streamlit as st
+
+# Ensure dashboard package is importable regardless of PYTHONPATH
+_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 
 from dashboard.queries.fraud_metrics import get_fraud_metrics
 
