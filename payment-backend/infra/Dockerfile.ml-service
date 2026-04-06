@@ -10,6 +10,6 @@ COPY . .
 EXPOSE 8001
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"
+  CMD python -c "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT', '8001') + '/health')"
 
-CMD ["uvicorn", "services.ml_service:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD uvicorn services.ml_service:app --host 0.0.0.0 --port ${PORT:-8001}
