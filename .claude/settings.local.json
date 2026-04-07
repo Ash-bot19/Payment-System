@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "mcp__claude_ai_Notion__notion-update-page",
-      "WebFetch(domain:www.notion.so)",
-      "Bash(docker compose:*)"
-    ]
-  }
-}
